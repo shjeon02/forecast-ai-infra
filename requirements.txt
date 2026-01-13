@@ -1,0 +1,19 @@
+# Infrastructure Capacity Forecasting - Requirements
+
+# Core dependencies
+# (Currently using only standard library, but adding for future extensibility)
+
+# Optional: For enhanced output formatting
+# rich>=13.0.0
+
+# Optional: For data analysis and ML-based forecasting
+# numpy>=1.24.0
+# pandas>=2.0.0
+# scikit-learn>=1.3.0
+
+# Optional: For web-based chatbot interface
+# flask>=2.3.0
+# flask-cors>=4.0.0
+
+# Optional: For API integration
+# requests>=2.31.0
