@@ -198,6 +198,8 @@
 
 ## Calculation Pipeline
 
+### Mode 1: Formula-Based Forecasting (Basic)
+
 ```
                     UserInput
                         │
@@ -244,6 +246,68 @@
                         │
                         ▼
                   CapacityPlan
+```
+
+### Mode 2: Time-Series Forecasting (Advanced)
+
+```
+                Historical Data
+        ┌───────────────────────────────┐
+        │  - UsageMetrics (time-series) │
+        │  - CostHistory (time-series)  │
+        │  - ServiceMetadata            │
+        └───────────────────────────────┘
+                        │
+                        ▼
+        ┌───────────────────────────────┐
+        │     STL Decomposition         │
+        │  - Trend extraction           │
+        │  - Seasonal pattern           │
+        │  - Residual analysis          │
+        └───────────────────────────────┘
+                        │
+          ┌─────────────┼─────────────┐
+          ▼             ▼             ▼
+    ┌──────────┐  ┌──────────┐  ┌──────────┐
+    │  ARIMA   │  │   ETS    │  │ Ensemble │
+    │  Model   │  │  Model   │  │ Weights  │
+    └──────────┘  └──────────┘  └──────────┘
+          │             │             │
+          └─────────────┼─────────────┘
+                        ▼
+        ┌───────────────────────────────┐
+        │     Ensemble Forecast         │
+        │  - Weighted combination       │
+        │  - Confidence intervals (P80, P95) │
+        └───────────────────────────────┘
+                        │
+                        ▼
+        ┌───────────────────────────────┐
+        │     Scenario Adjustment       │
+        │  - optimistic: 0.85x          │
+        │  - pessimistic: 1.15x         │
+        │  - spike: 1.5x                │
+        └───────────────────────────────┘
+                        │
+                        ▼
+        ┌───────────────────────────────┐
+        │     Attribution & Explain     │
+        │  - Impact breakdown           │
+        │  - Seasonal effects           │
+        │  - Trend contribution         │
+        └───────────────────────────────┘
+                        │
+                        ▼
+                  ForecastOutput
+        ┌───────────────────────────────┐
+        │  - forecast: List[float]      │
+        │  - intervals: {p80, p95}      │
+        │  - components: {trend,        │
+        │                 seasonal,     │
+        │                 residual}     │
+        │  - explanations: List[str]    │
+        │  - attributions: List[...]    │
+        └───────────────────────────────┘
 ```
 
 ---

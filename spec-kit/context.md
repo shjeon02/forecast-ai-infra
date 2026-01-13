@@ -15,13 +15,19 @@ There is a need for a systematic, data-driven approach to infrastructure capacit
 ## Goals
 
 ### Primary Goal
-Build an intelligent forecasting system that generates accurate infrastructure capacity plans based on user metrics (concurrent users, registered users) for chatbot and agent applications.
+Build an intelligent forecasting system that generates accurate infrastructure capacity plans based on multiple input sources:
+- **User metrics**: Concurrent users, registered users
+- **Historical data**: Usage metrics, cost history (for time-series forecasting)
+- **Service metadata**: Environment, criticality, cloud provider
+- **Resource specifications**: Instance types, regions, resource types
 
 ### Secondary Goals
 1. Provide an intuitive conversational interface for non-technical stakeholders
 2. Deliver actionable, detailed capacity recommendations
 3. Enable reproducible forecasting with configurable parameters
 4. Support both interactive and automated (CLI) usage patterns
+5. Support advanced time-series forecasting (STL, ARIMA, ETS ensemble)
+6. Enable scenario-based what-if analysis
 
 ## Target Users
 
@@ -88,3 +94,11 @@ Build an intelligent forecasting system that generates accurate infrastructure c
 | Safety Margin | Additional capacity buffer to handle unexpected load |
 | Horizontal Scaling | Adding more instances to handle increased load |
 | Vertical Scaling | Increasing resources (CPU/memory) of existing instances |
+| Service | A logical grouping of resources belonging to a team/product |
+| Usage Metric | Time-series data point (CPU utilization, memory usage, etc.) |
+| Historical Data | Past usage/cost data used for time-series forecasting |
+| Scenario | What-if analysis variant (optimistic, pessimistic, spike) |
+| STL Decomposition | Seasonal-Trend decomposition using LOESS for time-series |
+| ARIMA | Auto-Regressive Integrated Moving Average forecasting model |
+| ETS | Exponential Smoothing State Space model |
+| Ensemble Forecast | Combined prediction from multiple forecasting models |

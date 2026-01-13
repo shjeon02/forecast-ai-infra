@@ -99,50 +99,124 @@
 
 ---
 
-### Phase 5: Testing & Validation
+### Phase 5: Advanced Data Models
 **Duration**: 1 day  
 **Status**: 🔲 Pending
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
-| 5.1 | Manual testing of interactive flow | Test report | 3.7 |
-| 5.2 | Manual testing of CLI mode | Test report | 4.2 |
-| 5.3 | Edge case testing | Test report | 5.1, 5.2 |
-| 5.4 | Cross-platform validation | Test report | 5.1-5.3 |
-| 5.5 | Performance validation | Test report | 5.1-5.3 |
+| 5.1 | Define ServiceInput model | `models.py` | 1.1 |
+| 5.2 | Define ResourceInput model | `models.py` | - |
+| 5.3 | Define UsageMetric model | `models.py` | 5.1 |
+| 5.4 | Define CostHistory model | `models.py` | 5.1 |
+| 5.5 | Define ForecastConfig model | `models.py` | - |
+| 5.6 | Define ForecastOutput model | `models.py` | - |
+| 5.7 | Define CapacityRequest model | `models.py` | 5.1, 5.2 |
+
+**Acceptance Criteria**:
+- [ ] All advanced dataclasses defined with type hints
+- [ ] Models support optional fields for backward compatibility
+- [ ] Serialization to dict/JSON works correctly
+
+---
+
+### Phase 6: Time-Series Forecasting Engine
+**Duration**: 2 days  
+**Status**: 🔲 Pending
+
+| Task | Description | Deliverable | Dependencies |
+|------|-------------|-------------|--------------|
+| 6.1 | Implement STL decomposition | `forecasting.py` | 5.3, 5.4 |
+| 6.2 | Implement ARIMA model fitting | `forecasting.py` | 6.1 |
+| 6.3 | Implement ETS model fitting | `forecasting.py` | 6.1 |
+| 6.4 | Implement ensemble weighting | `forecasting.py` | 6.2, 6.3 |
+| 6.5 | Implement confidence intervals (P80, P95) | `forecasting.py` | 6.4 |
+| 6.6 | Implement scenario adjustments | `forecasting.py` | 6.4 |
+| 6.7 | Implement attribution & explanations | `forecasting.py` | 6.4 |
+| 6.8 | Implement rolling update/retraining | `forecasting.py` | 6.4 |
+
+**Acceptance Criteria**:
+- [ ] STL decomposition extracts trend, seasonal, residual
+- [ ] ARIMA produces valid forecasts with AIC selection
+- [ ] ETS produces valid forecasts
+- [ ] Ensemble combines models with configurable weights
+- [ ] Scenarios apply correct multipliers
+
+---
+
+### Phase 7: Service & Resource Management
+**Duration**: 1 day  
+**Status**: 🔲 Pending
+
+| Task | Description | Deliverable | Dependencies |
+|------|-------------|-------------|--------------|
+| 7.1 | Implement service metadata handling | `services.py` | 5.1 |
+| 7.2 | Implement resource specification parsing | `services.py` | 5.2 |
+| 7.3 | Implement cloud provider configuration | `config.py` | - |
+| 7.4 | Add provider-specific instance types | `config.py` | 7.3 |
+| 7.5 | Implement capacity request workflow | `governance.py` | 5.7 |
+
+**Acceptance Criteria**:
+- [ ] Service metadata properly validated
+- [ ] Cloud provider configs loaded correctly
+- [ ] Capacity requests can be created/submitted
+
+---
+
+### Phase 8: Testing & Validation
+**Duration**: 1.5 days  
+**Status**: 🔲 Pending
+
+| Task | Description | Deliverable | Dependencies |
+|------|-------------|-------------|--------------|
+| 8.1 | Manual testing of interactive flow | Test report | 3.7 |
+| 8.2 | Manual testing of CLI mode | Test report | 4.2 |
+| 8.3 | Edge case testing | Test report | 8.1, 8.2 |
+| 8.4 | Cross-platform validation | Test report | 8.1-8.3 |
+| 8.5 | Performance validation | Test report | 8.1-8.3 |
+| 8.6 | Time-series forecasting accuracy testing | Test report | 6.8 |
+| 8.7 | Scenario analysis validation | Test report | 6.6 |
 
 **Acceptance Criteria**:
 - [ ] All test scenarios pass
 - [ ] No crashes on edge cases
 - [ ] Performance meets NFR targets
 - [ ] Works on macOS, Linux, Windows
+- [ ] Time-series forecasts within expected accuracy
 
 ---
 
-### Phase 6: Documentation
-**Duration**: 0.5 day  
-**Status**: ✅ Complete
+### Phase 9: Documentation
+**Duration**: 1 day  
+**Status**: 🔲 Pending
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
-| 6.1 | Write README | `README.md` | 4.4 |
-| 6.2 | Document configuration | `config.py` comments | 1.8 |
-| 6.3 | Add docstrings | All `.py` files | - |
-| 6.4 | Create specification docs | `spec-kit/*.md` | - |
+| 9.1 | Update README with advanced features | `README.md` | 6.8 |
+| 9.2 | Document configuration | `config.py` comments | 7.4 |
+| 9.3 | Add docstrings | All `.py` files | - |
+| 9.4 | Update specification docs | `spec-kit/*.md` | - |
+| 9.5 | Create API documentation | `docs/api.md` | 6.8, 7.5 |
+| 9.6 | Create usage examples | `docs/examples.md` | 9.1 |
 
 **Acceptance Criteria**:
-- [ ] README covers installation and usage
+- [ ] README covers installation and usage for both modes
 - [ ] All public functions have docstrings
 - [ ] Configuration parameters documented
+- [ ] Time-series forecasting documented with examples
 
 ---
 
 ## Task Dependencies Graph
 
 ```
-Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──▶ Phase 3 ──▶ Phase 4 ──▶ Phase 5
-                │                      │
-                └──────────────────────┴──▶ Phase 6
+Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──▶ Phase 3 ──▶ Phase 4 ──┐
+                │                      │                   │
+                └──────────────────────┴───────────────────┤
+                                                           ▼
+Phase 5 (Advanced Models) ──▶ Phase 6 (Time-Series) ──▶ Phase 7 (Services)
+                                       │                    │
+                                       └────────────────────┴──▶ Phase 8 ──▶ Phase 9
 ```
 
 ---
@@ -190,12 +264,15 @@ Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──▶ Phase 3 ──▶ Phase 4 
 
 | Milestone | Description | Target Date | Status |
 |-----------|-------------|-------------|--------|
-| M1 | Data models complete | Day 1 | ✅ |
-| M2 | Core engine complete | Day 2 | ✅ |
+| M1 | Basic data models complete | Day 1 | ✅ |
+| M2 | Formula-based engine complete | Day 2 | ✅ |
 | M3 | Interactive mode working | Day 3 | ✅ |
 | M4 | CLI mode working | Day 3.5 | ✅ |
-| M5 | Testing complete | Day 4.5 | 🔲 |
-| M6 | Documentation complete | Day 5 | ✅ |
+| M5 | Advanced data models complete | Day 4.5 | 🔲 |
+| M6 | Time-series forecasting complete | Day 6.5 | 🔲 |
+| M7 | Service management complete | Day 7.5 | 🔲 |
+| M8 | Testing complete | Day 9 | 🔲 |
+| M9 | Documentation complete | Day 10 | 🔲 |
 
 ---
 
@@ -212,15 +289,19 @@ Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──▶ Phase 3 ──▶ Phase 4 
 
 ## Future Enhancements (Backlog)
 
-| ID | Enhancement | Priority | Effort |
-|----|-------------|----------|--------|
-| E1 | Machine learning forecasting | P2 | Large |
-| E2 | Historical data import | P2 | Medium |
-| E3 | Multi-cloud provider support | P1 | Medium |
-| E4 | Web-based interface | P2 | Large |
-| E5 | API endpoints | P2 | Medium |
-| E6 | PDF export | P3 | Small |
-| E7 | Interactive visualization | P3 | Medium |
-| E8 | Comparison mode (multiple scenarios) | P2 | Medium |
-| E9 | Real-time monitoring integration | P3 | Large |
-| E10 | Cost optimization recommendations | P2 | Medium |
+| ID | Enhancement | Priority | Effort | Status |
+|----|-------------|----------|--------|--------|
+| E1 | Time-series forecasting (STL, ARIMA, ETS) | P1 | Large | 🔲 Phase 6 |
+| E2 | Historical data import | P1 | Medium | 🔲 Phase 5 |
+| E3 | Multi-cloud provider support | P1 | Medium | 🔲 Phase 7 |
+| E4 | Scenario-based what-if analysis | P1 | Medium | 🔲 Phase 6 |
+| E5 | Service metadata & governance | P1 | Medium | 🔲 Phase 7 |
+| E6 | Web-based interface | P2 | Large | Backlog |
+| E7 | API endpoints (FastAPI) | P2 | Medium | Backlog |
+| E8 | PDF export | P3 | Small | Backlog |
+| E9 | Interactive visualization | P3 | Medium | Backlog |
+| E10 | Real-time monitoring integration | P3 | Large | Backlog |
+| E11 | Cost optimization recommendations | P2 | Medium | Backlog |
+| E12 | Kubernetes cost allocation | P2 | Medium | Backlog |
+| E13 | Carbon footprint tracking | P3 | Medium | Backlog |
+| E14 | Anomaly detection | P2 | Large | Backlog |

@@ -4,7 +4,7 @@
 
 ### FR-1: User Input Collection
 
-#### FR-1.1: Required Inputs
+#### FR-1.1: Required Inputs (Basic Mode)
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | FR-1.1.1 | System SHALL accept concurrent user count as integer input | P0 |
@@ -13,13 +13,47 @@
 | FR-1.1.4 | System SHALL validate that registered users > 0 | P0 |
 | FR-1.1.5 | System SHALL validate concurrent users ≤ registered users (warning only) | P1 |
 
-#### FR-1.2: Optional Inputs
+#### FR-1.2: Optional Inputs (Basic Mode)
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | FR-1.2.1 | System SHOULD accept growth rate as percentage (0-1000%) | P1 |
 | FR-1.2.2 | System SHOULD accept peak load multiplier as float (1.0-10.0) | P1 |
 | FR-1.2.3 | System SHOULD accept data retention period in days | P2 |
 | FR-1.2.4 | System SHOULD accept application type (web, mobile, API) | P2 |
+
+#### FR-1.3: Service Metadata Inputs (Advanced Mode)
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-1.3.1 | System SHOULD accept service identifier (service_id) | P1 |
+| FR-1.3.2 | System SHOULD accept team identifier (team_id) | P2 |
+| FR-1.3.3 | System SHOULD accept environment type (prod, staging, dev) | P1 |
+| FR-1.3.4 | System SHOULD accept criticality level (high, medium, low) | P1 |
+| FR-1.3.5 | System SHOULD accept cloud provider (aws, gcp, azure) | P1 |
+| FR-1.3.6 | System SHOULD accept region specification | P2 |
+
+#### FR-1.4: Resource Specification Inputs
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-1.4.1 | System SHOULD accept resource type (ec2, rds, s3, etc.) | P2 |
+| FR-1.4.2 | System SHOULD accept instance type specification | P2 |
+| FR-1.4.3 | System SHOULD accept current resource count | P2 |
+| FR-1.4.4 | System SHOULD accept resource tags as key-value pairs | P3 |
+
+#### FR-1.5: Historical Data Inputs (Time-Series Forecasting)
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-1.5.1 | System SHOULD accept historical usage metrics (time-series) | P1 |
+| FR-1.5.2 | System SHOULD accept historical cost data (time-series) | P1 |
+| FR-1.5.3 | System SHOULD accept metric types (cpu_utilization, memory_utilization, etc.) | P1 |
+| FR-1.5.4 | System SHOULD accept forecast horizon in days/months | P1 |
+| FR-1.5.5 | System SHOULD accept seasonal period for decomposition | P2 |
+
+#### FR-1.6: Scenario Analysis Inputs
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-1.6.1 | System SHOULD accept scenario type (optimistic, pessimistic, baseline) | P2 |
+| FR-1.6.2 | System SHOULD accept spike simulation parameters | P2 |
+| FR-1.6.3 | System SHOULD accept budget constraints for comparison | P2 |
 
 ### FR-2: Capacity Forecasting
 
@@ -144,8 +178,9 @@
 
 ## Data Requirements
 
-### Input Data Model
+### Input Data Models
 
+#### Basic Input (Formula-Based Forecasting)
 ```
 UserInput:
   concurrent_users: int (required, > 0)
@@ -154,6 +189,66 @@ UserInput:
   peak_load_multiplier: float (optional, default 1.5)
   data_retention_days: int (optional, default 365)
   application_type: string (optional, default "web")
+```
+
+#### Service Metadata (Advanced Mode)
+```
+ServiceInput:
+  service_id: string (optional, unique identifier)
+  service_name: string (optional)
+  team_id: string (optional)
+  environment: string (optional, enum: prod|staging|dev)
+  criticality: string (optional, enum: high|medium|low)
+  cloud_provider: string (optional, enum: aws|gcp|azure)
+  region: string (optional, e.g., "us-east-1")
+```
+
+#### Resource Specification
+```
+ResourceInput:
+  resource_type: string (optional, e.g., ec2, rds, s3)
+  instance_type: string (optional, e.g., t3.medium, m5.large)
+  current_count: int (optional, existing resource count)
+  status: string (optional, enum: running|stopped)
+  tags: dict (optional, key-value metadata)
+```
+
+#### Historical Data (Time-Series Forecasting)
+```
+UsageMetric:
+  service_id: string (reference to service)
+  timestamp: datetime
+  metric_name: string (enum: cpu_utilization|memory_utilization|disk_io|network_io)
+  value: float
+  unit: string (e.g., percent, bytes, mbps)
+
+CostHistory:
+  service_id: string (reference to service)
+  timestamp: datetime
+  amount: float
+  currency: string (default: USD)
+  category: string (enum: compute|storage|network)
+  dimension: dict (optional, e.g., {"product": "search", "tenant": "acme"})
+```
+
+#### Forecasting Parameters
+```
+ForecastConfig:
+  horizon_days: int (optional, default 30)
+  horizon_months: int (optional, default 12)
+  seasonal_period: int (optional, default 12 for monthly)
+  scenario: string (optional, enum: baseline|optimistic|pessimistic|spike)
+  variance_threshold_pct: float (optional, default 10.0, for retraining trigger)
+```
+
+#### Capacity Request (Governance)
+```
+CapacityRequest:
+  service_id: string (required)
+  requester_email: string (required)
+  justification: string (required)
+  requested_resources: list[ResourceInput]
+  status: string (enum: draft|submitted|approved|rejected)
 ```
 
 ### Output Data Model
