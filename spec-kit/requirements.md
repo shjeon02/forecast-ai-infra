@@ -4,97 +4,110 @@
 
 ### FR-1: User Input Collection
 
-#### FR-1.1: Required Inputs (Basic Mode)
+#### FR-1.1: LLM Workload Inputs (Required)
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-1.1.1 | System SHALL accept concurrent user count as integer input | P0 |
-| FR-1.1.2 | System SHALL accept registered user count as integer input | P0 |
-| FR-1.1.3 | System SHALL validate that concurrent users > 0 | P0 |
-| FR-1.1.4 | System SHALL validate that registered users > 0 | P0 |
-| FR-1.1.5 | System SHALL validate concurrent users ≤ registered users (warning only) | P1 |
+| FR-1.1.1 | System SHALL accept requests per second (RPS) as float input | P0 |
+| FR-1.1.2 | System SHALL accept average input tokens per request as integer | P0 |
+| FR-1.1.3 | System SHALL accept average output tokens per request as integer | P0 |
+| FR-1.1.4 | System SHALL validate that RPS > 0 | P0 |
+| FR-1.1.5 | System SHALL validate that tokens per request > 0 | P0 |
 
-#### FR-1.2: Optional Inputs (Basic Mode)
+#### FR-1.2: Model Configuration Inputs (Required)
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-1.2.1 | System SHOULD accept growth rate as percentage (0-1000%) | P1 |
-| FR-1.2.2 | System SHOULD accept peak load multiplier as float (1.0-10.0) | P1 |
-| FR-1.2.3 | System SHOULD accept data retention period in days | P2 |
-| FR-1.2.4 | System SHOULD accept application type (web, mobile, API) | P2 |
+| FR-1.2.1 | System SHALL accept model size in parameters (e.g., 7B, 70B, 405B) | P0 |
+| FR-1.2.2 | System SHALL accept model precision/quantization (FP16, INT8, INT4) | P0 |
+| FR-1.2.3 | System SHOULD accept context window size (default: 4096) | P1 |
+| FR-1.2.4 | System SHOULD accept target latency SLA (P50, P99 in ms) | P1 |
+| FR-1.2.5 | System SHOULD accept batch size (default: 1) | P1 |
 
-#### FR-1.3: Service Metadata Inputs (Advanced Mode)
+#### FR-1.3: Optional Scaling Inputs
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-1.3.1 | System SHOULD accept service identifier (service_id) | P1 |
-| FR-1.3.2 | System SHOULD accept team identifier (team_id) | P2 |
-| FR-1.3.3 | System SHOULD accept environment type (prod, staging, dev) | P1 |
-| FR-1.3.4 | System SHOULD accept criticality level (high, medium, low) | P1 |
-| FR-1.3.5 | System SHOULD accept cloud provider (aws, gcp, azure) | P1 |
-| FR-1.3.6 | System SHOULD accept region specification | P2 |
+| FR-1.3.1 | System SHOULD accept peak load multiplier as float (1.0-10.0) | P1 |
+| FR-1.3.2 | System SHOULD accept growth rate as percentage (0-1000%) | P1 |
+| FR-1.3.3 | System SHOULD accept target GPU utilization percentage (default: 70%) | P2 |
 
-#### FR-1.4: Resource Specification Inputs
+#### FR-1.4: GPU/Infrastructure Inputs
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-1.4.1 | System SHOULD accept resource type (ec2, rds, s3, etc.) | P2 |
-| FR-1.4.2 | System SHOULD accept instance type specification | P2 |
-| FR-1.4.3 | System SHOULD accept current resource count | P2 |
-| FR-1.4.4 | System SHOULD accept resource tags as key-value pairs | P3 |
+| FR-1.4.1 | System SHOULD accept GPU type (A100-40GB, A100-80GB, H100, etc.) | P1 |
+| FR-1.4.2 | System SHOULD accept cloud provider (aws, gcp, azure) | P1 |
+| FR-1.4.3 | System SHOULD accept region specification | P2 |
+| FR-1.4.4 | System SHOULD accept current replica count (for scaling recommendations) | P2 |
 
-#### FR-1.5: Historical Data Inputs (Time-Series Forecasting)
+#### FR-1.5: Service Metadata Inputs (Advanced Mode)
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-1.5.1 | System SHOULD accept historical usage metrics (time-series) | P1 |
-| FR-1.5.2 | System SHOULD accept historical cost data (time-series) | P1 |
-| FR-1.5.3 | System SHOULD accept metric types (cpu_utilization, memory_utilization, etc.) | P1 |
-| FR-1.5.4 | System SHOULD accept forecast horizon in days/months | P1 |
-| FR-1.5.5 | System SHOULD accept seasonal period for decomposition | P2 |
+| FR-1.5.1 | System SHOULD accept service identifier (service_id) | P1 |
+| FR-1.5.2 | System SHOULD accept team identifier (team_id) | P2 |
+| FR-1.5.3 | System SHOULD accept environment type (prod, staging, dev) | P1 |
+| FR-1.5.4 | System SHOULD accept criticality level (high, medium, low) | P1 |
 
-#### FR-1.6: Scenario Analysis Inputs
+#### FR-1.6: Historical Data Inputs (Time-Series Forecasting)
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-1.6.1 | System SHOULD accept scenario type (optimistic, pessimistic, baseline) | P2 |
-| FR-1.6.2 | System SHOULD accept spike simulation parameters | P2 |
-| FR-1.6.3 | System SHOULD accept budget constraints for comparison | P2 |
+| FR-1.6.1 | System SHOULD accept historical RPS metrics (time-series) | P1 |
+| FR-1.6.2 | System SHOULD accept historical token throughput (TPS) | P1 |
+| FR-1.6.3 | System SHOULD accept historical latency metrics (TTFT, ITL) | P1 |
+| FR-1.6.4 | System SHOULD accept historical cost data (time-series) | P1 |
+| FR-1.6.5 | System SHOULD accept forecast horizon in days/months | P1 |
+
+#### FR-1.7: Scenario Analysis Inputs
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-1.7.1 | System SHOULD accept scenario type (optimistic, pessimistic, baseline) | P2 |
+| FR-1.7.2 | System SHOULD accept traffic spike simulation parameters | P2 |
+| FR-1.7.3 | System SHOULD accept budget constraints for comparison | P2 |
 
 ### FR-2: Capacity Forecasting
 
-#### FR-2.1: Compute Resources
+#### FR-2.1: GPU Resources
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-2.1.1 | System SHALL calculate required CPU cores | P0 |
-| FR-2.1.2 | System SHALL calculate required memory in GB | P0 |
-| FR-2.1.3 | System SHALL recommend appropriate instance types | P0 |
-| FR-2.1.4 | System SHALL calculate minimum and maximum instance counts | P0 |
+| FR-2.1.1 | System SHALL calculate required GPU memory | P0 |
+| FR-2.1.2 | System SHALL calculate required number of GPUs | P0 |
+| FR-2.1.3 | System SHALL recommend appropriate GPU types | P0 |
+| FR-2.1.4 | System SHALL calculate minimum and maximum model replicas | P0 |
 
-#### FR-2.2: Storage Resources
+#### FR-2.2: Throughput Calculations
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-2.2.1 | System SHALL calculate database storage requirements | P0 |
-| FR-2.2.2 | System SHALL calculate file storage requirements | P0 |
-| FR-2.2.3 | System SHALL calculate backup storage requirements | P1 |
-| FR-2.2.4 | System SHALL calculate total storage requirements | P0 |
+| FR-2.2.1 | System SHALL calculate tokens per second (TPS) per replica | P0 |
+| FR-2.2.2 | System SHALL calculate total TPS capacity | P0 |
+| FR-2.2.3 | System SHALL calculate estimated latency (TTFT, ITL) | P1 |
+| FR-2.2.4 | System SHALL validate against latency SLA | P1 |
 
-#### FR-2.3: Network Resources
+#### FR-2.3: Storage Resources
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-2.3.1 | System SHALL calculate bandwidth requirements in Mbps | P0 |
-| FR-2.3.2 | System SHALL calculate connection limits | P1 |
-| FR-2.3.3 | System SHALL recommend load balancer count | P1 |
+| FR-2.3.1 | System SHALL calculate model storage requirements | P0 |
+| FR-2.3.2 | System SHALL calculate log/monitoring storage requirements | P1 |
+| FR-2.3.3 | System SHALL calculate cache storage requirements | P2 |
 
-#### FR-2.4: Scaling Recommendations
+#### FR-2.4: Network Resources
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-2.4.1 | System SHALL provide horizontal scaling recommendations | P0 |
-| FR-2.4.2 | System SHALL provide vertical scaling recommendations | P1 |
-| FR-2.4.3 | System SHALL recommend auto-scaling thresholds | P0 |
+| FR-2.4.1 | System SHALL calculate bandwidth requirements | P1 |
+| FR-2.4.2 | System SHALL calculate connection limits | P1 |
+| FR-2.4.3 | System SHALL recommend load balancer count | P1 |
+
+#### FR-2.5: Scaling Recommendations
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-2.5.1 | System SHALL provide horizontal scaling recommendations (replicas) | P0 |
+| FR-2.5.2 | System SHALL provide auto-scaling thresholds (RPS, GPU util, latency) | P0 |
+| FR-2.5.3 | System SHALL recommend batch size for target throughput | P1 |
 
 ### FR-3: Cost Estimation
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-3.1 | System SHOULD calculate monthly compute costs | P2 |
-| FR-3.2 | System SHOULD calculate monthly storage costs | P2 |
-| FR-3.3 | System SHOULD calculate monthly network costs | P2 |
-| FR-3.4 | System SHOULD calculate total monthly costs | P2 |
+| FR-3.1 | System SHOULD calculate monthly GPU costs | P1 |
+| FR-3.2 | System SHOULD calculate cost per 1M tokens | P1 |
+| FR-3.3 | System SHOULD calculate monthly infrastructure costs | P2 |
+| FR-3.4 | System SHOULD calculate total monthly costs | P1 |
 
 ### FR-4: User Interface
 
@@ -180,15 +193,34 @@
 
 ### Input Data Models
 
-#### Basic Input (Formula-Based Forecasting)
+#### LLM Workload Input (Required)
 ```
-UserInput:
-  concurrent_users: int (required, > 0)
-  registered_users: int (required, > 0)
-  growth_rate: float (optional, 0-1000)
+LLMWorkloadInput:
+  requests_per_second: float (required, > 0)
+  avg_input_tokens: int (required, > 0)
+  avg_output_tokens: int (required, > 0)
   peak_load_multiplier: float (optional, default 1.5)
-  data_retention_days: int (optional, default 365)
-  application_type: string (optional, default "web")
+  growth_rate: float (optional, 0-1000%)
+```
+
+#### Model Configuration (Required)
+```
+ModelConfig:
+  model_size_billions: float (required, e.g., 7, 70, 405)
+  precision: string (required, enum: FP32|FP16|BF16|INT8|INT4)
+  context_window: int (optional, default 4096)
+  batch_size: int (optional, default 1)
+  target_latency_p50_ms: float (optional)
+  target_latency_p99_ms: float (optional)
+```
+
+#### GPU Configuration
+```
+GPUConfig:
+  gpu_type: string (optional, e.g., A100-40GB, A100-80GB, H100-80GB)
+  gpu_memory_gb: float (derived from gpu_type if not specified)
+  target_gpu_utilization: float (optional, default 0.7)
+  current_replicas: int (optional)
 ```
 
 #### Service Metadata (Advanced Mode)
@@ -203,32 +235,22 @@ ServiceInput:
   region: string (optional, e.g., "us-east-1")
 ```
 
-#### Resource Specification
-```
-ResourceInput:
-  resource_type: string (optional, e.g., ec2, rds, s3)
-  instance_type: string (optional, e.g., t3.medium, m5.large)
-  current_count: int (optional, existing resource count)
-  status: string (optional, enum: running|stopped)
-  tags: dict (optional, key-value metadata)
-```
-
 #### Historical Data (Time-Series Forecasting)
 ```
-UsageMetric:
+LLMUsageMetric:
   service_id: string (reference to service)
   timestamp: datetime
-  metric_name: string (enum: cpu_utilization|memory_utilization|disk_io|network_io)
+  metric_name: string (enum: rps|tps|ttft_ms|itl_ms|gpu_utilization)
   value: float
-  unit: string (e.g., percent, bytes, mbps)
+  unit: string (e.g., requests/sec, tokens/sec, ms, percent)
 
 CostHistory:
   service_id: string (reference to service)
   timestamp: datetime
   amount: float
   currency: string (default: USD)
-  category: string (enum: compute|storage|network)
-  dimension: dict (optional, e.g., {"product": "search", "tenant": "acme"})
+  category: string (enum: gpu_compute|storage|network)
+  tokens_processed: int (optional, for cost-per-token calculation)
 ```
 
 #### Forecasting Parameters
@@ -236,53 +258,55 @@ CostHistory:
 ForecastConfig:
   horizon_days: int (optional, default 30)
   horizon_months: int (optional, default 12)
-  seasonal_period: int (optional, default 12 for monthly)
+  seasonal_period: int (optional, default 7 for weekly patterns)
   scenario: string (optional, enum: baseline|optimistic|pessimistic|spike)
   variance_threshold_pct: float (optional, default 10.0, for retraining trigger)
-```
-
-#### Capacity Request (Governance)
-```
-CapacityRequest:
-  service_id: string (required)
-  requester_email: string (required)
-  justification: string (required)
-  requested_resources: list[ResourceInput]
-  status: string (enum: draft|submitted|approved|rejected)
 ```
 
 ### Output Data Model
 
 ```
-CapacityPlan:
-  user_input: UserInput
-  compute: ComputeResources
-    cpu_cores: float
-    memory_gb: float
-    recommended_instance_types: list[string]
-    min_instances: int
-    max_instances: int
-  storage: StorageResources
-    database_storage_gb: float
-    file_storage_gb: float
-    backup_storage_gb: float
+LLMCapacityPlan:
+  workload_input: LLMWorkloadInput
+  model_config: ModelConfig
+  
+  gpu_resources:
+    gpu_memory_per_replica_gb: float
+    min_gpus_per_replica: int
+    recommended_gpu_type: string
+    min_replicas: int
+    max_replicas: int
+    total_gpus: int
+  
+  throughput:
+    tps_per_replica: float
+    total_tps_capacity: float
+    max_rps_capacity: float
+    estimated_ttft_ms: float
+    estimated_itl_ms: float
+    meets_latency_sla: boolean
+  
+  storage:
+    model_storage_gb: float
+    cache_storage_gb: float
     total_storage_gb: float
-  network: NetworkResources
+  
+  network:
     bandwidth_mbps: float
     connection_limit: int
     recommended_load_balancers: int
-  scaling: ScalingRecommendations
-    horizontal_scaling: string
-    vertical_scaling: string
-    auto_scaling_min: int
-    auto_scaling_max: int
-    auto_scaling_threshold_cpu: float
-    auto_scaling_threshold_memory: float
-  cost: CostEstimate (optional)
-    monthly_compute_cost: float
-    monthly_storage_cost: float
-    monthly_network_cost: float
-    total_monthly_cost: float
+  
+  scaling:
+    recommended_min_replicas: int
+    recommended_max_replicas: int
+    auto_scale_rps_threshold: float
+    auto_scale_gpu_util_threshold: float
+    auto_scale_latency_threshold_ms: float
+  
+  cost:
+    monthly_gpu_cost: float
+    cost_per_million_tokens: float
+    monthly_total_cost: float
     currency: string
 ```
 
@@ -298,9 +322,14 @@ python main.py
 
 # Non-interactive mode
 python commands/forecast.py \
-  --concurrent-users <int> \
-  --registered-users <int> \
-  [--growth-rate <float>] \
+  --rps 10.0 \
+  --input-tokens 500 \
+  --output-tokens 200 \
+  --model-size 70 \
+  --precision FP16 \
+  [--gpu-type A100-80GB] \
+  [--context-window 8192] \
+  [--batch-size 4] \
   [--cost] \
   [--output <filepath>]
 ```
@@ -308,20 +337,28 @@ python commands/forecast.py \
 ### Programmatic Interface
 
 ```python
-from models import UserInput
-from forecast_engine import ForecastEngine
+from models import LLMWorkloadInput, ModelConfig
+from forecast_engine import LLMForecastEngine
 
-# Create input
-user_input = UserInput(
-    concurrent_users=1000,
-    registered_users=50000
+# Create inputs
+workload = LLMWorkloadInput(
+    requests_per_second=10.0,
+    avg_input_tokens=500,
+    avg_output_tokens=200
+)
+
+model = ModelConfig(
+    model_size_billions=70,
+    precision="FP16",
+    context_window=8192
 )
 
 # Generate plan
-engine = ForecastEngine()
-plan = engine.generate_capacity_plan(user_input)
+engine = LLMForecastEngine()
+plan = engine.generate_capacity_plan(workload, model)
 
 # Access results
-print(plan.compute.cpu_cores)
+print(plan.gpu_resources.total_gpus)
+print(plan.cost.cost_per_million_tokens)
 print(plan.to_dict())
 ```

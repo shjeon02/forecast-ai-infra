@@ -197,55 +197,106 @@
 ---
 
 ## Calculation Pipeline
+---
 
-### Mode 1: Formula-Based Forecasting (Basic)
+## Calculation Pipeline
+
+### Mode 1: LLM Capacity Forecasting (Basic)
 
 ```
-                    UserInput
-                        │
-                        ▼
-        ┌───────────────────────────────┐
-        │     Extract Parameters        │
-        │  - concurrent_users           │
-        │  - registered_users           │
-        │  - peak_load_multiplier       │
-        │  - growth_rate                │
-        └───────────────────────────────┘
+         LLMWorkloadInput              ModelConfig
+                │                           │
+                ▼                           ▼
+        ┌───────────────────────────────────────────┐
+        │           Extract Parameters              │
+        │  - requests_per_second (RPS)              │
+        │  - avg_input_tokens                       │
+        │  - avg_output_tokens                      │
+        │  - model_size_billions                    │
+        │  - precision (FP16/INT8/INT4)            │
+        │  - context_window                         │
+        │  - batch_size                             │
+        └───────────────────────────────────────────┘
                         │
           ┌─────────────┼─────────────┐
           ▼             ▼             ▼
     ┌──────────┐  ┌──────────┐  ┌──────────┐
-    │ Compute  │  │ Storage  │  │ Network  │
-    │  Calc    │  │  Calc    │  │  Calc    │
+    │   GPU    │  │Throughput│  │  Network │
+    │  Memory  │  │   TPS    │  │   Calc   │
+    │   Calc   │  │   Calc   │  │          │
     └──────────┘  └──────────┘  └──────────┘
           │             │             │
           ▼             ▼             ▼
     ┌──────────┐  ┌──────────┐  ┌──────────┐
-    │ Apply    │  │ Apply    │  │ Apply    │
-    │ Multiplier│ │ Growth   │  │ Multiplier│
+    │  Model   │  │ Latency  │  │Bandwidth │
+    │ Weight + │  │Estimation│  │   Calc   │
+    │ KV Cache │  │TTFT, ITL │  │          │
     └──────────┘  └──────────┘  └──────────┘
           │             │             │
-          ▼             ▼             ▼
-    ┌──────────┐  ┌──────────┐  ┌──────────┐
-    │ Apply    │  │ Apply    │  │ Apply    │
-    │ Safety   │  │ Safety   │  │ Safety   │
-    │ Margin   │  │ Margin   │  │ Margin   │
-    └──────────┘  └──────────┘  └──────────┘
+          ▼             ▼             │
+    ┌──────────┐  ┌──────────┐       │
+    │  Replica │  │  SLA     │       │
+    │   Count  │  │  Check   │       │
+    └──────────┘  └──────────┘       │
           │             │             │
           └─────────────┼─────────────┘
                         ▼
               ┌─────────────────┐
               │ Scaling Advisor │
+              │ - min/max replicas │
+              │ - auto-scale thresholds │
               └─────────────────┘
                         │
                         ▼
               ┌─────────────────┐
               │ Cost Estimator  │
-              │   (optional)    │
+              │ - GPU cost/month │
+              │ - cost per 1M tokens │
               └─────────────────┘
                         │
                         ▼
-                  CapacityPlan
+                 LLMCapacityPlan
+```
+
+### GPU Memory Calculation Formula
+
+```
+GPU Memory = Model Weights + KV Cache + Activations + Overhead
+
+Where:
+  Model Weights = model_params × bytes_per_param
+    - FP32: 4 bytes
+    - FP16/BF16: 2 bytes
+    - INT8: 1 byte
+    - INT4: 0.5 bytes
+
+  KV Cache = 2 × num_layers × hidden_dim × context_length × batch_size × bytes_per_param
+
+  Activations ≈ 10-20% of model weights (during inference)
+  
+  Overhead ≈ 10% buffer
+```
+
+### Throughput Calculation Formula
+
+```
+TPS per Replica = (GPU Memory Bandwidth × Efficiency) / (Model Size × Bytes per Param)
+
+Effective RPS = TPS / avg_output_tokens
+
+Required Replicas = ceil(target_RPS / RPS_per_replica) × safety_margin
+```
+
+### Latency Estimation
+
+```
+TTFT (Time to First Token) = 
+  (Input Tokens × Time per Token for Prefill) + Model Loading Overhead
+
+ITL (Inter-Token Latency) = 
+  Model Size / (GPU Memory Bandwidth × Efficiency)
+
+E2E Latency = TTFT + (Output Tokens × ITL)
 ```
 
 ### Mode 2: Time-Series Forecasting (Advanced)
@@ -253,16 +304,18 @@
 ```
                 Historical Data
         ┌───────────────────────────────┐
-        │  - UsageMetrics (time-series) │
-        │  - CostHistory (time-series)  │
-        │  - ServiceMetadata            │
+        │  - RPS metrics (time-series)  │
+        │  - TPS metrics (time-series)  │
+        │  - Latency (TTFT, ITL)        │
+        │  - GPU utilization            │
+        │  - Cost history               │
         └───────────────────────────────┘
                         │
                         ▼
         ┌───────────────────────────────┐
         │     STL Decomposition         │
         │  - Trend extraction           │
-        │  - Seasonal pattern           │
+        │  - Seasonal pattern (daily/weekly) │
         │  - Residual analysis          │
         └───────────────────────────────┘
                         │
@@ -286,15 +339,15 @@
         │     Scenario Adjustment       │
         │  - optimistic: 0.85x          │
         │  - pessimistic: 1.15x         │
-        │  - spike: 1.5x                │
+        │  - spike: 2.0-3.0x            │
         └───────────────────────────────┘
                         │
                         ▼
         ┌───────────────────────────────┐
-        │     Attribution & Explain     │
-        │  - Impact breakdown           │
-        │  - Seasonal effects           │
-        │  - Trend contribution         │
+        │  Capacity Recommendation      │
+        │  - Future replica needs       │
+        │  - GPU scaling timeline       │
+        │  - Cost projection            │
         └───────────────────────────────┘
                         │
                         ▼
@@ -306,7 +359,7 @@
         │                 seasonal,     │
         │                 residual}     │
         │  - explanations: List[str]    │
-        │  - attributions: List[...]    │
+        │  - replica_recommendations    │
         └───────────────────────────────┘
 ```
 
