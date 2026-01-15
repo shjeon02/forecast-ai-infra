@@ -197,11 +197,17 @@
 ---
 
 ## Calculation Pipeline
+
+The system supports two distinct forecasting modes for different LLM workloads:
+
+1. **Inference (Serving)**: Real-time request serving with latency requirements
+2. **Fine-Tuning (Training)**: Model training with dataset and epoch requirements
+
+These modes have fundamentally different resource requirements, bottlenecks, and optimization goals.
+
 ---
 
-## Calculation Pipeline
-
-### Mode 1: LLM Capacity Forecasting (Basic)
+### Mode 1: Inference Capacity Forecasting (Serving)
 
 ```
          LLMWorkloadInput              ModelConfig
@@ -299,7 +305,140 @@ ITL (Inter-Token Latency) =
 E2E Latency = TTFT + (Output Tokens × ITL)
 ```
 
-### Mode 2: Time-Series Forecasting (Advanced)
+### Mode 2: Fine-Tuning Capacity Forecasting (Training)
+
+```
+         TrainingInput              ModelConfig
+                │                           │
+                ▼                           ▼
+        ┌───────────────────────────────────────────┐
+        │           Extract Parameters              │
+        │  - dataset_size (total tokens)           │
+        │  - sequence_length                        │
+        │  - global_batch_size                      │
+        │  - micro_batch_size                       │
+        │  - num_epochs                             │
+        │  - model_size_billions                    │
+        │  - precision (FP16/BF16/FP8)            │
+        │  - optimizer_type (Adam, Adafactor)     │
+        │  - gradient_accumulation_steps            │
+        └───────────────────────────────────────────┘
+                        │
+          ┌─────────────┼─────────────┐
+          ▼             ▼             ▼
+    ┌──────────┐  ┌──────────┐  ┌──────────┐
+    │   GPU    │  │Throughput│  │  Network │
+    │  Memory  │  │   Calc   │  │   Calc   │
+    │   Calc   │  │          │  │          │
+    └──────────┘  └──────────┘  └──────────┘
+          │             │             │
+          ▼             ▼             ▼
+    ┌──────────┐  ┌──────────┐  ┌──────────┐
+    │  Model   │  │ Training │  │Bandwidth │
+    │ Weight + │  │  Speed   │  │   Calc   │
+    │ Gradients│  │tokens/sec│  │          │
+    │ + Optim  │  │per GPU   │  │          │
+    │  States  │  │          │  │          │
+    └──────────┘  └──────────┘  └──────────┘
+          │             │             │
+          ▼             ▼             │
+    ┌──────────┐  ┌──────────┐       │
+    │  GPU     │  │ Training │       │
+    │  Count   │  │ Duration │       │
+    │ Required │  │Estimation│       │
+    └──────────┘  └──────────┘       │
+          │             │             │
+          └─────────────┼─────────────┘
+                        ▼
+              ┌─────────────────┐
+              │ Data Parallel   │
+              │ Configuration   │
+              │ - GPUs per node │
+              │ - num_nodes     │
+              │ - total GPUs    │
+              └─────────────────┘
+                        │
+                        ▼
+              ┌─────────────────┐
+              │ Cost Estimator  │
+              │ - GPU cost/training │
+              │ - cost per epoch │
+              │ - total training cost │
+              └─────────────────┘
+                        │
+                        ▼
+              TrainingCapacityPlan
+```
+
+### Fine-Tuning GPU Memory Calculation Formula
+
+```
+GPU Memory = Model Weights + Gradients + Optimizer States + Activations + Overhead
+
+Where:
+  Model Weights = model_params × bytes_per_param
+    - FP32: 4 bytes
+    - FP16/BF16: 2 bytes
+    - FP8: 1 byte
+
+  Gradients = Model Weights (same size as weights)
+  
+  Optimizer States:
+    - Adam: 2 × Model Weights (momentum + variance)
+    - AdamW: 2 × Model Weights
+    - Adafactor: ~0.5 × Model Weights (factorized)
+    - SGD: 0 (no state)
+  
+  Activations = sequence_length × batch_size × hidden_dim × num_layers × bytes_per_param
+    - Can be reduced with gradient checkpointing (recompute activations)
+    - Gradient checkpointing: ~33% memory reduction, ~20% slower
+  
+  Overhead ≈ 10% buffer
+```
+
+### Fine-Tuning Throughput Calculation
+
+```
+Tokens per Second per GPU = 
+  (GPU Compute FLOPs × Efficiency) / (Model FLOPs per Token)
+
+Where:
+  Model FLOPs per Token ≈ 2 × model_params × sequence_length
+
+Training Speed = tokens_per_sec_per_gpu × num_gpus × gradient_accumulation_steps
+
+Training Duration = (dataset_size × num_epochs) / training_speed
+```
+
+### Fine-Tuning GPU Count Calculation
+
+```
+Required GPUs = ceil(
+  (Model Memory + Optimizer Memory) / (Available GPU Memory per GPU)
+) × data_parallel_factor
+
+Where:
+  data_parallel_factor = ceil(global_batch_size / (micro_batch_size × gradient_accum_steps))
+  
+  Minimum GPUs for data parallelism = data_parallel_factor
+```
+
+### Key Differences: Inference vs Fine-Tuning
+
+| Aspect | Inference (Serving) | Fine-Tuning (Training) |
+|--------|---------------------|------------------------|
+| **Primary Bottleneck** | GPU Memory (KV Cache) | GPU Memory (Optimizer States) |
+| **Memory Components** | Weights + KV Cache + Activations | Weights + Gradients + Optimizer + Activations |
+| **Scaling Strategy** | Horizontal (Replicas) | Data Parallelism (More GPUs) |
+| **Throughput Metric** | TPS, RPS | Tokens/sec per GPU, Training speed |
+| **Time Metric** | Latency (TTFT, ITL) | Training duration (hours/days) |
+| **Cost Model** | Per token, per request | Per training run, per epoch |
+| **Batch Size Impact** | Throughput vs Latency tradeoff | Memory vs Speed tradeoff |
+| **Optimization Focus** | Low latency, high throughput | Fast training, memory efficiency |
+
+---
+
+### Mode 3: Time-Series Forecasting (Advanced)
 
 ```
                 Historical Data
@@ -309,6 +448,7 @@ E2E Latency = TTFT + (Output Tokens × ITL)
         │  - Latency (TTFT, ITL)        │
         │  - GPU utilization            │
         │  - Cost history               │
+        │  - Training metrics (optional) │
         └───────────────────────────────┘
                         │
                         ▼
@@ -360,8 +500,30 @@ E2E Latency = TTFT + (Output Tokens × ITL)
         │                 residual}     │
         │  - explanations: List[str]    │
         │  - replica_recommendations    │
+        │  - gpu_scaling_recommendations│
         └───────────────────────────────┘
 ```
+
+---
+
+## Mode Selection Strategy
+
+The system determines which forecasting mode to use based on input parameters:
+
+### Inference Mode Selection
+- **Trigger**: `workload_type="inference"` OR presence of `requests_per_second`
+- **Use Case**: Real-time serving, API endpoints, chatbots
+- **Output**: Replicas, TPS, latency, cost per token
+
+### Fine-Tuning Mode Selection
+- **Trigger**: `workload_type="training"` OR presence of `dataset_size` and `num_epochs`
+- **Use Case**: Model training, fine-tuning, continued pre-training
+- **Output**: GPU count, training duration, cost per training run
+
+### Combined Forecasting
+- **Use Case**: Organizations running both inference and training
+- **Approach**: Run both modes separately and combine results
+- **Output**: Separate capacity plans for each workload type
 
 ---
 
