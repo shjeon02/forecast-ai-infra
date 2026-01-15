@@ -17,7 +17,7 @@
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | FR-1.2.1 | System SHALL accept model size in parameters (e.g., 7B, 70B, 405B) | P0 |
-| FR-1.2.2 | System SHALL accept model precision/quantization (FP16, INT8, INT4) | P0 |
+| FR-1.2.2 | System SHALL accept model precision/quantization (FP32, FP16, BF16, INT8, INT4) | P0 |
 | FR-1.2.3 | System SHOULD accept context window size (default: 4096) | P1 |
 | FR-1.2.4 | System SHOULD accept target latency SLA (P50, P99 in ms) | P1 |
 | FR-1.2.5 | System SHOULD accept batch size (default: 1) | P1 |

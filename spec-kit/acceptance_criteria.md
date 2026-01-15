@@ -473,7 +473,14 @@ CapacityRequest(
     service_id="svc_001",
     requester_email="engineer@company.com",
     justification="Expected traffic increase for product launch",
-    requested_resources=[ResourceInput(resource_type="ec2", instance_type="m5.xlarge", current_count=5)]
+    workload_type="inference",
+    requested_resources=GPUResourceRequest(
+        gpu_type="A100-80GB",
+        current_replicas=2,
+        requested_replicas=5,
+        model_size_billions=70,
+        target_rps=50.0
+    )
 )
 ```
 
@@ -481,6 +488,7 @@ CapacityRequest(
 - [ ] Request created with status "draft"
 - [ ] Request can be submitted (status -> "submitted")
 - [ ] Request can be approved/rejected
+- [ ] GPU cost delta calculated
 - [ ] Audit log entry created for each action
 
 ---
@@ -720,9 +728,10 @@ After any code change, verify:
 
 ## Sign-Off Criteria
 
-### Ready for Release (Basic Mode)
+### Ready for Release (Inference Mode)
 
-- [ ] All TS-1 to TS-12 test scenarios pass
+- [ ] All TS-1 to TS-9 test scenarios pass (inference)
+- [ ] TS-12 cost estimation pass
 - [ ] All EC-1 to EC-5 edge cases handled
 - [ ] All PC-* performance criteria met
 - [ ] All CC-* compatibility criteria met
@@ -730,15 +739,23 @@ After any code change, verify:
 - [ ] No known blocking issues
 - [ ] Regression tests pass
 
+### Ready for Release (Fine-Tuning Mode)
+
+- [ ] TS-5, TS-10, TS-11, TS-12b test scenarios pass (training)
+- [ ] TS-21 to TS-24 fine-tuning scenarios pass
+- [ ] EC-6 gradient checkpointing edge case handled
+- [ ] Training duration calculation verified
+- [ ] Optimizer memory calculation verified
+
 ### Ready for Release (Advanced Mode)
 
 - [ ] All TS-13 to TS-20 test scenarios pass
-- [ ] All EC-6 to EC-9 edge cases handled
+- [ ] All EC-7 to EC-12 edge cases handled
 - [ ] Time-series forecasting accuracy validated
 - [ ] Service management workflow tested
-- [ ] Multi-cloud support validated
+- [ ] Multi-cloud GPU support validated
 - [ ] Advanced documentation complete
-- [ ] Integration with basic mode verified
+- [ ] Integration with inference/training modes verified
 
 ### Approval
 
