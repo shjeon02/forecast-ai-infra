@@ -56,7 +56,16 @@ Build an intelligent forecasting system that generates accurate infrastructure c
 - Higher context window usage (8K-128K tokens)
 - Integration with external APIs and tools
 
-### Key LLM Resource Drivers
+### LLM Fine-Tuning Workloads
+- Model training and adaptation
+- Dataset processing with sequence lengths
+- Gradient computation and optimizer states
+- Data parallelism across multiple GPUs
+- Training duration measured in hours/days
+
+### Key Resource Drivers by Workload Type
+
+#### Inference (Serving) Resource Drivers
 
 | Driver | Impact | Scaling Factor |
 |--------|--------|----------------|
@@ -66,15 +75,36 @@ Build an intelligent forecasting system that generates accurate infrastructure c
 | **Batch Size** | Throughput vs latency tradeoff | Higher = more throughput |
 | **Model Replicas** | Total throughput capacity | Linear scaling |
 
+#### Fine-Tuning (Training) Resource Drivers
+
+| Driver | Impact | Scaling Factor |
+|--------|--------|----------------|
+| **Dataset Size (Tokens)** | Training duration | Linear |
+| **Sequence Length** | GPU memory for activations | Linear to Quadratic |
+| **Batch Size** | GPU memory, training speed | Linear |
+| **Optimizer Type** | GPU memory for states | Adam: 2x weights, Adafactor: 0.5x |
+| **Number of Epochs** | Training duration | Linear |
+| **Gradient Accumulation** | Effective batch size | Linear |
+
 ## Key Assumptions
 
+### Inference Assumptions
 1. **Request-Based Scaling**: Resource requirements scale with requests per second (RPS) and tokens per request, not user count
-2. **GPU Memory Bound**: LLM serving is primarily GPU memory bound; model size + KV cache determines GPU requirements
+2. **GPU Memory Bound (Inference)**: Model size + KV cache determines GPU requirements
 3. **Peak Load Patterns**: Peak RPS is typically 1.5-3x average (configurable)
 4. **Latency vs Throughput**: Batch size trades latency for throughput; larger batches = higher throughput, higher latency
-5. **Safety Margins**: A 25% safety margin is appropriate for production workloads
-6. **Horizontal Scaling**: Model replicas scale horizontally across GPUs/nodes
-7. **Token Economics**: Cost scales with tokens processed, not users served
+5. **Horizontal Scaling**: Model replicas scale horizontally across GPUs/nodes
+6. **Token Economics**: Serving cost scales with tokens processed
+
+### Fine-Tuning Assumptions
+7. **GPU Memory Bound (Training)**: Weights + Gradients + Optimizer States + Activations determines GPU requirements
+8. **Data Parallelism**: Training scales horizontally by distributing batches across GPUs
+9. **Gradient Checkpointing**: Can reduce memory by ~33% at cost of ~20% speed
+10. **Optimizer Memory**: Adam requires 2x model weights for optimizer states
+
+### Common Assumptions
+11. **Safety Margins**: A 25% safety margin is appropriate for production workloads
+12. **Cloud Pricing**: GPU costs vary by provider and region; estimates are approximate
 
 ## Constraints
 
@@ -112,6 +142,11 @@ Build an intelligent forecasting system that generates accurate infrastructure c
 | **Model Parameters** | Number of weights in the model (e.g., 7B, 70B, 405B) |
 | **GPU Memory** | VRAM required for model weights + KV cache + activations |
 | **Quantization** | Reducing model precision (FP16→INT8→INT4) to reduce memory |
+| **Gradient Checkpointing** | Recomputing activations during backward pass to save memory |
+| **Optimizer States** | Additional memory for Adam momentum and variance (2x weights) |
+| **Data Parallelism** | Distributing training batches across multiple GPUs |
+| **Gradient Accumulation** | Simulating larger batch sizes by accumulating gradients |
+| **Training Duration** | Total time to complete model training (hours/days) |
 | Capacity Plan | Comprehensive infrastructure specification document |
 | Peak Load Multiplier | Factor applied to baseline calculations for peak usage periods |
 | Safety Margin | Additional capacity buffer to handle unexpected load |

@@ -61,6 +61,26 @@
 | FR-1.7.2 | System SHOULD accept traffic spike simulation parameters | P2 |
 | FR-1.7.3 | System SHOULD accept budget constraints for comparison | P2 |
 
+#### FR-1.8: Workload Type Selection
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-1.8.1 | System SHALL accept workload type (inference, training) | P0 |
+| FR-1.8.2 | System SHALL default to inference mode if not specified | P0 |
+| FR-1.8.3 | System SHALL validate inputs based on selected workload type | P0 |
+
+#### FR-1.9: Fine-Tuning Inputs (Training Mode)
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-1.9.1 | System SHALL accept dataset size in tokens | P0 |
+| FR-1.9.2 | System SHALL accept sequence length | P0 |
+| FR-1.9.3 | System SHALL accept number of training epochs | P0 |
+| FR-1.9.4 | System SHALL accept global batch size | P0 |
+| FR-1.9.5 | System SHOULD accept micro batch size (default: 1) | P1 |
+| FR-1.9.6 | System SHOULD accept gradient accumulation steps | P1 |
+| FR-1.9.7 | System SHOULD accept optimizer type (Adam, AdamW, Adafactor, SGD) | P1 |
+| FR-1.9.8 | System SHOULD accept gradient checkpointing flag (default: false) | P1 |
+| FR-1.9.9 | System SHOULD accept training precision (FP32, FP16, BF16, FP8) | P1 |
+
 ### FR-2: Capacity Forecasting
 
 #### FR-2.1: GPU Resources
@@ -93,21 +113,38 @@
 | FR-2.4.2 | System SHALL calculate connection limits | P1 |
 | FR-2.4.3 | System SHALL recommend load balancer count | P1 |
 
-#### FR-2.5: Scaling Recommendations
+#### FR-2.5: Scaling Recommendations (Inference)
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | FR-2.5.1 | System SHALL provide horizontal scaling recommendations (replicas) | P0 |
 | FR-2.5.2 | System SHALL provide auto-scaling thresholds (RPS, GPU util, latency) | P0 |
 | FR-2.5.3 | System SHALL recommend batch size for target throughput | P1 |
 
-### FR-3: Cost Estimation
-
+#### FR-2.6: Fine-Tuning Capacity Calculations (Training Mode)
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-3.1 | System SHOULD calculate monthly GPU costs | P1 |
-| FR-3.2 | System SHOULD calculate cost per 1M tokens | P1 |
-| FR-3.3 | System SHOULD calculate monthly infrastructure costs | P2 |
-| FR-3.4 | System SHOULD calculate total monthly costs | P1 |
+| FR-2.6.1 | System SHALL calculate GPU memory for training (weights + gradients + optimizer + activations) | P0 |
+| FR-2.6.2 | System SHALL calculate required number of GPUs for training | P0 |
+| FR-2.6.3 | System SHALL calculate training throughput (tokens/sec) | P0 |
+| FR-2.6.4 | System SHALL estimate training duration (hours/days) | P0 |
+| FR-2.6.5 | System SHOULD recommend data parallel configuration | P1 |
+| FR-2.6.6 | System SHOULD calculate memory savings with gradient checkpointing | P2 |
+
+### FR-3: Cost Estimation
+
+#### FR-3.1: Inference Cost Estimation
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-3.1.1 | System SHOULD calculate monthly GPU costs (inference) | P1 |
+| FR-3.1.2 | System SHOULD calculate cost per 1M tokens (inference) | P1 |
+| FR-3.1.3 | System SHOULD calculate monthly infrastructure costs | P2 |
+
+#### FR-3.2: Fine-Tuning Cost Estimation
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-3.2.1 | System SHOULD calculate total training GPU cost | P1 |
+| FR-3.2.2 | System SHOULD calculate cost per epoch | P1 |
+| FR-3.2.3 | System SHOULD calculate cost per training run | P1 |
 
 ### FR-4: User Interface
 
@@ -263,6 +300,21 @@ ForecastConfig:
   variance_threshold_pct: float (optional, default 10.0, for retraining trigger)
 ```
 
+#### Fine-Tuning Input (Training Mode)
+```
+TrainingInput:
+  workload_type: string (required, value: "training")
+  dataset_size_tokens: int (required, total tokens in dataset)
+  sequence_length: int (required, e.g., 2048, 4096, 8192)
+  num_epochs: int (required, e.g., 1, 3, 5)
+  global_batch_size: int (required, e.g., 32, 64, 128)
+  micro_batch_size: int (optional, default 1)
+  gradient_accumulation_steps: int (optional, default 1)
+  optimizer_type: string (optional, enum: Adam|AdamW|Adafactor|SGD, default Adam)
+  gradient_checkpointing: boolean (optional, default false)
+  training_precision: string (optional, enum: FP32|FP16|BF16|FP8, default FP16)
+```
+
 ### Output Data Model
 
 ```
@@ -310,6 +362,48 @@ LLMCapacityPlan:
     currency: string
 ```
 
+#### Training Capacity Plan Output (Training Mode)
+```
+TrainingCapacityPlan:
+  training_input: TrainingInput
+  model_config: ModelConfig
+  
+  gpu_resources:
+    gpu_memory_per_gpu_gb: float
+    model_weights_gb: float
+    gradients_gb: float
+    optimizer_states_gb: float
+    activations_gb: float
+    required_gpus: int
+    recommended_gpu_type: string
+    gpus_per_node: int
+    num_nodes: int
+  
+  training_metrics:
+    tokens_per_second_per_gpu: float
+    total_tokens_per_second: float
+    steps_per_epoch: int
+    total_steps: int
+    estimated_duration_hours: float
+    estimated_duration_days: float
+  
+  data_parallel_config:
+    data_parallel_size: int
+    effective_batch_size: int
+    gradient_accumulation_steps: int
+  
+  storage:
+    model_checkpoint_gb: float
+    dataset_storage_gb: float
+    total_storage_gb: float
+  
+  cost:
+    gpu_cost_per_hour: float
+    total_training_cost: float
+    cost_per_epoch: float
+    currency: string
+```
+
 ---
 
 ## Interface Requirements
@@ -320,8 +414,9 @@ LLMCapacityPlan:
 # Interactive mode
 python main.py
 
-# Non-interactive mode
+# Inference mode (non-interactive)
 python commands/forecast.py \
+  --mode inference \
   --rps 10.0 \
   --input-tokens 500 \
   --output-tokens 200 \
@@ -332,15 +427,30 @@ python commands/forecast.py \
   [--batch-size 4] \
   [--cost] \
   [--output <filepath>]
+
+# Fine-tuning mode (non-interactive)
+python commands/forecast.py \
+  --mode training \
+  --dataset-size 1000000000 \
+  --sequence-length 4096 \
+  --epochs 3 \
+  --global-batch-size 64 \
+  --model-size 70 \
+  --precision BF16 \
+  [--optimizer Adam] \
+  [--gradient-checkpointing] \
+  [--gpu-type A100-80GB] \
+  [--cost] \
+  [--output <filepath>]
 ```
 
 ### Programmatic Interface
 
 ```python
-from models import LLMWorkloadInput, ModelConfig
+from models import LLMWorkloadInput, TrainingInput, ModelConfig
 from forecast_engine import LLMForecastEngine
 
-# Create inputs
+# === Inference Mode ===
 workload = LLMWorkloadInput(
     requests_per_second=10.0,
     avg_input_tokens=500,
@@ -353,12 +463,25 @@ model = ModelConfig(
     context_window=8192
 )
 
-# Generate plan
 engine = LLMForecastEngine()
-plan = engine.generate_capacity_plan(workload, model)
+inference_plan = engine.generate_inference_plan(workload, model)
 
-# Access results
-print(plan.gpu_resources.total_gpus)
-print(plan.cost.cost_per_million_tokens)
-print(plan.to_dict())
+print(inference_plan.gpu_resources.total_gpus)
+print(inference_plan.cost.cost_per_million_tokens)
+
+# === Fine-Tuning Mode ===
+training = TrainingInput(
+    dataset_size_tokens=1_000_000_000,
+    sequence_length=4096,
+    num_epochs=3,
+    global_batch_size=64,
+    optimizer_type="Adam",
+    gradient_checkpointing=True
+)
+
+training_plan = engine.generate_training_plan(training, model)
+
+print(training_plan.gpu_resources.required_gpus)
+print(training_plan.training_metrics.estimated_duration_hours)
+print(training_plan.cost.total_training_cost)
 ```

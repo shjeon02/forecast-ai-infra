@@ -99,41 +99,93 @@
 
 ---
 
-### Phase 5: Advanced Data Models
-**Duration**: 1 day  
+### Phase 5: LLM-Specific Data Models
+**Duration**: 1.5 days  
 **Status**: 🔲 Pending
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
-| 5.1 | Define ServiceInput model | `models.py` | 1.1 |
-| 5.2 | Define ResourceInput model | `models.py` | - |
-| 5.3 | Define UsageMetric model | `models.py` | 5.1 |
-| 5.4 | Define CostHistory model | `models.py` | 5.1 |
-| 5.5 | Define ForecastConfig model | `models.py` | - |
-| 5.6 | Define ForecastOutput model | `models.py` | - |
-| 5.7 | Define CapacityRequest model | `models.py` | 5.1, 5.2 |
+| 5.1 | Define LLMWorkloadInput model (inference) | `models.py` | 1.1 |
+| 5.2 | Define TrainingInput model (fine-tuning) | `models.py` | - |
+| 5.3 | Define ModelConfig model | `models.py` | - |
+| 5.4 | Define GPUConfig model | `models.py` | - |
+| 5.5 | Define LLMCapacityPlan model (inference output) | `models.py` | 5.1, 5.3 |
+| 5.6 | Define TrainingCapacityPlan model (training output) | `models.py` | 5.2, 5.3 |
+| 5.7 | Define GPU specs configuration (A100, H100, etc.) | `config.py` | - |
+| 5.8 | Define optimizer memory multipliers | `config.py` | - |
 
 **Acceptance Criteria**:
-- [ ] All advanced dataclasses defined with type hints
-- [ ] Models support optional fields for backward compatibility
+- [ ] All LLM-specific dataclasses defined with type hints
+- [ ] Inference and training models are separate
+- [ ] GPU specs accurately reflect real hardware
 - [ ] Serialization to dict/JSON works correctly
 
 ---
 
-### Phase 6: Time-Series Forecasting Engine
+### Phase 6: Inference Forecasting Engine
 **Duration**: 2 days  
 **Status**: 🔲 Pending
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
-| 6.1 | Implement STL decomposition | `forecasting.py` | 5.3, 5.4 |
-| 6.2 | Implement ARIMA model fitting | `forecasting.py` | 6.1 |
-| 6.3 | Implement ETS model fitting | `forecasting.py` | 6.1 |
-| 6.4 | Implement ensemble weighting | `forecasting.py` | 6.2, 6.3 |
-| 6.5 | Implement confidence intervals (P80, P95) | `forecasting.py` | 6.4 |
-| 6.6 | Implement scenario adjustments | `forecasting.py` | 6.4 |
-| 6.7 | Implement attribution & explanations | `forecasting.py` | 6.4 |
-| 6.8 | Implement rolling update/retraining | `forecasting.py` | 6.4 |
+| 6.1 | Implement GPU memory calculation (inference) | `inference_engine.py` | 5.3, 5.4, 5.7 |
+| 6.2 | Implement KV cache calculation | `inference_engine.py` | 6.1 |
+| 6.3 | Implement throughput (TPS) calculation | `inference_engine.py` | 6.1 |
+| 6.4 | Implement latency estimation (TTFT, ITL) | `inference_engine.py` | 6.3 |
+| 6.5 | Implement replica count calculation | `inference_engine.py` | 6.3, 6.4 |
+| 6.6 | Implement GPU type recommendation | `inference_engine.py` | 6.1, 5.7 |
+| 6.7 | Implement inference cost estimation | `inference_engine.py` | 6.5 |
+| 6.8 | Implement generate_inference_plan() | `inference_engine.py` | 6.1-6.7 |
+
+**Acceptance Criteria**:
+- [ ] GPU memory accurately calculated for model + KV cache
+- [ ] TPS calculation matches expected throughput
+- [ ] Latency estimation is reasonable
+- [ ] Replica recommendations meet target RPS
+- [ ] Cost per token calculation is accurate
+
+---
+
+### Phase 7: Fine-Tuning Forecasting Engine
+**Duration**: 2 days  
+**Status**: 🔲 Pending
+
+| Task | Description | Deliverable | Dependencies |
+|------|-------------|-------------|--------------|
+| 7.1 | Implement GPU memory calculation (training) | `training_engine.py` | 5.3, 5.4, 5.8 |
+| 7.2 | Implement gradient memory calculation | `training_engine.py` | 7.1 |
+| 7.3 | Implement optimizer states calculation | `training_engine.py` | 7.1, 5.8 |
+| 7.4 | Implement activations memory calculation | `training_engine.py` | 7.1 |
+| 7.5 | Implement gradient checkpointing savings | `training_engine.py` | 7.4 |
+| 7.6 | Implement training throughput calculation | `training_engine.py` | 7.1 |
+| 7.7 | Implement training duration estimation | `training_engine.py` | 7.6 |
+| 7.8 | Implement data parallel configuration | `training_engine.py` | 7.1 |
+| 7.9 | Implement training cost estimation | `training_engine.py` | 7.7 |
+| 7.10 | Implement generate_training_plan() | `training_engine.py` | 7.1-7.9 |
+
+**Acceptance Criteria**:
+- [ ] GPU memory accurately includes weights + gradients + optimizer + activations
+- [ ] Optimizer memory matches expected (Adam: 2x weights)
+- [ ] Gradient checkpointing reduces memory by ~33%
+- [ ] Training duration estimation is reasonable
+- [ ] Cost per training run calculation is accurate
+
+---
+
+### Phase 8: Time-Series Forecasting Engine
+**Duration**: 2 days  
+**Status**: 🔲 Pending
+
+| Task | Description | Deliverable | Dependencies |
+|------|-------------|-------------|--------------|
+| 8.1 | Implement STL decomposition | `forecasting.py` | 5.3, 5.4 |
+| 8.2 | Implement ARIMA model fitting | `forecasting.py` | 8.1 |
+| 8.3 | Implement ETS model fitting | `forecasting.py` | 8.1 |
+| 8.4 | Implement ensemble weighting | `forecasting.py` | 8.2, 8.3 |
+| 8.5 | Implement confidence intervals (P80, P95) | `forecasting.py` | 8.4 |
+| 8.6 | Implement scenario adjustments | `forecasting.py` | 8.4 |
+| 8.7 | Implement attribution & explanations | `forecasting.py` | 8.4 |
+| 8.8 | Implement rolling update/retraining | `forecasting.py` | 8.4 |
 
 **Acceptance Criteria**:
 - [ ] STL decomposition extracts trend, seasonal, residual
@@ -144,41 +196,42 @@
 
 ---
 
-### Phase 7: Service & Resource Management
+### Phase 9: Service & Resource Management
 **Duration**: 1 day  
 **Status**: 🔲 Pending
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
-| 7.1 | Implement service metadata handling | `services.py` | 5.1 |
-| 7.2 | Implement resource specification parsing | `services.py` | 5.2 |
-| 7.3 | Implement cloud provider configuration | `config.py` | - |
-| 7.4 | Add provider-specific instance types | `config.py` | 7.3 |
-| 7.5 | Implement capacity request workflow | `governance.py` | 5.7 |
+| 9.1 | Implement service metadata handling | `services.py` | 5.1 |
+| 9.2 | Implement cloud provider configuration | `config.py` | - |
+| 9.3 | Add provider-specific GPU pricing | `config.py` | 9.2 |
+| 9.4 | Implement mode selection logic | `forecast_engine.py` | 6.8, 7.10 |
 
 **Acceptance Criteria**:
 - [ ] Service metadata properly validated
-- [ ] Cloud provider configs loaded correctly
-- [ ] Capacity requests can be created/submitted
+- [ ] Cloud provider GPU pricing loaded correctly
+- [ ] Mode selection (inference vs training) works correctly
 
 ---
 
-### Phase 8: Testing & Validation
-**Duration**: 1.5 days  
+### Phase 10: Testing & Validation
+**Duration**: 2 days  
 **Status**: 🔲 Pending
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
-| 8.1 | Manual testing of interactive flow | Test report | 3.7 |
-| 8.2 | Manual testing of CLI mode | Test report | 4.2 |
-| 8.3 | Edge case testing | Test report | 8.1, 8.2 |
-| 8.4 | Cross-platform validation | Test report | 8.1-8.3 |
-| 8.5 | Performance validation | Test report | 8.1-8.3 |
-| 8.6 | Time-series forecasting accuracy testing | Test report | 6.8 |
-| 8.7 | Scenario analysis validation | Test report | 6.6 |
+| 10.1 | Manual testing of inference mode | Test report | 6.8 |
+| 10.2 | Manual testing of fine-tuning mode | Test report | 7.10 |
+| 10.3 | Manual testing of CLI mode | Test report | 4.2 |
+| 10.4 | Edge case testing | Test report | 10.1-10.3 |
+| 10.5 | Cross-platform validation | Test report | 10.1-10.4 |
+| 10.6 | GPU memory calculation accuracy testing | Test report | 6.1, 7.1 |
+| 10.7 | Time-series forecasting accuracy testing | Test report | 8.8 |
+| 10.8 | Scenario analysis validation | Test report | 8.6 |
 
 **Acceptance Criteria**:
-- [ ] All test scenarios pass
+- [ ] All test scenarios pass for both modes
+- [ ] GPU memory calculations match expected values
 - [ ] No crashes on edge cases
 - [ ] Performance meets NFR targets
 - [ ] Works on macOS, Linux, Windows
@@ -186,24 +239,25 @@
 
 ---
 
-### Phase 9: Documentation
+### Phase 11: Documentation
 **Duration**: 1 day  
 **Status**: 🔲 Pending
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
-| 9.1 | Update README with advanced features | `README.md` | 6.8 |
-| 9.2 | Document configuration | `config.py` comments | 7.4 |
-| 9.3 | Add docstrings | All `.py` files | - |
-| 9.4 | Update specification docs | `spec-kit/*.md` | - |
-| 9.5 | Create API documentation | `docs/api.md` | 6.8, 7.5 |
-| 9.6 | Create usage examples | `docs/examples.md` | 9.1 |
+| 11.1 | Update README with inference/training modes | `README.md` | 6.8, 7.10 |
+| 11.2 | Document GPU configurations | `config.py` comments | 5.7 |
+| 11.3 | Add docstrings | All `.py` files | - |
+| 11.4 | Update specification docs | `spec-kit/*.md` | - |
+| 11.5 | Create API documentation | `docs/api.md` | 6.8, 7.10 |
+| 11.6 | Create inference usage examples | `docs/inference_examples.md` | 11.1 |
+| 11.7 | Create fine-tuning usage examples | `docs/training_examples.md` | 11.1 |
 
 **Acceptance Criteria**:
-- [ ] README covers installation and usage for both modes
+- [ ] README covers both inference and fine-tuning modes
 - [ ] All public functions have docstrings
-- [ ] Configuration parameters documented
-- [ ] Time-series forecasting documented with examples
+- [ ] GPU configuration parameters documented
+- [ ] Inference and fine-tuning documented with examples
 
 ---
 
@@ -214,9 +268,21 @@ Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──▶ Phase 3 ──▶ Phase 4 
                 │                      │                   │
                 └──────────────────────┴───────────────────┤
                                                            ▼
-Phase 5 (Advanced Models) ──▶ Phase 6 (Time-Series) ──▶ Phase 7 (Services)
-                                       │                    │
-                                       └────────────────────┴──▶ Phase 8 ──▶ Phase 9
+                                                    Phase 5 (LLM Models)
+                                                           │
+                              ┌────────────────────────────┼────────────────────────────┐
+                              ▼                            ▼                            ▼
+                    Phase 6 (Inference)          Phase 7 (Fine-Tuning)         Phase 8 (Time-Series)
+                              │                            │                            │
+                              └────────────────────────────┼────────────────────────────┘
+                                                           ▼
+                                                    Phase 9 (Services)
+                                                           │
+                                                           ▼
+                                                    Phase 10 (Testing)
+                                                           │
+                                                           ▼
+                                                    Phase 11 (Docs)
 ```
 
 ---
@@ -268,11 +334,13 @@ Phase 5 (Advanced Models) ──▶ Phase 6 (Time-Series) ──▶ Phase 7 (Ser
 | M2 | Formula-based engine complete | Day 2 | ✅ |
 | M3 | Interactive mode working | Day 3 | ✅ |
 | M4 | CLI mode working | Day 3.5 | ✅ |
-| M5 | Advanced data models complete | Day 4.5 | 🔲 |
-| M6 | Time-series forecasting complete | Day 6.5 | 🔲 |
-| M7 | Service management complete | Day 7.5 | 🔲 |
-| M8 | Testing complete | Day 9 | 🔲 |
-| M9 | Documentation complete | Day 10 | 🔲 |
+| M5 | LLM-specific data models complete | Day 5 | 🔲 |
+| M6 | Inference forecasting engine complete | Day 7 | 🔲 |
+| M7 | Fine-tuning forecasting engine complete | Day 9 | 🔲 |
+| M8 | Time-series forecasting complete | Day 11 | 🔲 |
+| M9 | Service management complete | Day 12 | 🔲 |
+| M10 | Testing complete | Day 14 | 🔲 |
+| M11 | Documentation complete | Day 15 | 🔲 |
 
 ---
 
@@ -291,17 +359,18 @@ Phase 5 (Advanced Models) ──▶ Phase 6 (Time-Series) ──▶ Phase 7 (Ser
 
 | ID | Enhancement | Priority | Effort | Status |
 |----|-------------|----------|--------|--------|
-| E1 | Time-series forecasting (STL, ARIMA, ETS) | P1 | Large | 🔲 Phase 6 |
-| E2 | Historical data import | P1 | Medium | 🔲 Phase 5 |
-| E3 | Multi-cloud provider support | P1 | Medium | 🔲 Phase 7 |
-| E4 | Scenario-based what-if analysis | P1 | Medium | 🔲 Phase 6 |
-| E5 | Service metadata & governance | P1 | Medium | 🔲 Phase 7 |
-| E6 | Web-based interface | P2 | Large | Backlog |
-| E7 | API endpoints (FastAPI) | P2 | Medium | Backlog |
-| E8 | PDF export | P3 | Small | Backlog |
-| E9 | Interactive visualization | P3 | Medium | Backlog |
-| E10 | Real-time monitoring integration | P3 | Large | Backlog |
-| E11 | Cost optimization recommendations | P2 | Medium | Backlog |
-| E12 | Kubernetes cost allocation | P2 | Medium | Backlog |
-| E13 | Carbon footprint tracking | P3 | Medium | Backlog |
-| E14 | Anomaly detection | P2 | Large | Backlog |
+| E1 | Inference capacity forecasting | P0 | Large | 🔲 Phase 6 |
+| E2 | Fine-tuning capacity forecasting | P0 | Large | 🔲 Phase 7 |
+| E3 | Time-series forecasting (STL, ARIMA, ETS) | P1 | Large | 🔲 Phase 8 |
+| E4 | Historical data import | P1 | Medium | 🔲 Phase 5 |
+| E5 | Multi-cloud GPU pricing | P1 | Medium | 🔲 Phase 9 |
+| E6 | Scenario-based what-if analysis | P1 | Medium | 🔲 Phase 8 |
+| E7 | Tensor parallelism support | P2 | Medium | Backlog |
+| E8 | Pipeline parallelism support | P2 | Medium | Backlog |
+| E9 | LoRA/QLoRA memory calculation | P2 | Medium | Backlog |
+| E10 | Web-based interface | P2 | Large | Backlog |
+| E11 | API endpoints (FastAPI) | P2 | Medium | Backlog |
+| E12 | PDF export | P3 | Small | Backlog |
+| E13 | Interactive visualization | P3 | Medium | Backlog |
+| E14 | Real-time monitoring integration | P3 | Large | Backlog |
+| E15 | Cost optimization recommendations | P2 | Medium | Backlog |
