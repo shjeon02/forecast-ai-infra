@@ -1,266 +1,336 @@
-# LLM Infrastructure Capacity Forecasting System
+# LLM Infrastructure Capacity Forecasting
 
-An intelligent forecasting system that generates accurate infrastructure capacity plans for LLM/Agent applications based on workload metrics (requests per second, tokens, model parameters) rather than user counts.
+GPU 및 인프라 용량을 예측하는 도구입니다. LLM 추론(Inference) 및 파인튜닝(Training) 워크로드에 대한 리소스 요구사항을 계산합니다.
 
-## Features
+## 주요 기능
 
-- 🤖 **Interactive Chatbot Interface**: Conversational agent that guides you through the forecasting process
-- 🎯 **LLM-Specific Planning**: Calculates GPU resources, model replicas, and throughput (TPS/RPS)
-- 📊 **Comprehensive Capacity Planning**: GPU memory, latency estimation (TTFT/ITL), and scaling recommendations
-- 💰 **Token-Based Cost Estimates**: Cost per million tokens and monthly GPU costs
-- 📈 **Scaling Recommendations**: Horizontal scaling (replicas) and auto-scaling thresholds
-- 📄 **Export Capabilities**: Export capacity plans to JSON format
+- 🧠 **LLM 추론 용량 예측**: GPU 메모리, TPS, 레이턴시, 레플리카 수 계산
+- 🎓 **파인튜닝 용량 예측**: 학습 시간, GPU 수, 메모리 분석, 비용 추정
+- 📈 **시계열 예측**: 과거 데이터 기반 미래 리소스 수요 예측 (STL, ARIMA, ETS)
+- 💰 **비용 추정**: AWS, GCP, Azure GPU 가격 기반 비용 계산
+- 📋 **서비스 관리**: 서비스 메타데이터, 용량 요청 워크플로우
 
-## Quick Start
+## 설치
 
-### Installation
-
-1. Clone or navigate to the project directory:
 ```bash
-cd resource_forecast
-```
-
-2. (Optional) Create a virtual environment:
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies (currently uses only standard library):
-```bash
+# 의존성 설치
 pip install -r requirements.txt
 ```
 
-### Usage
+## 사용법
 
-#### Interactive Mode (Recommended)
+### 1. Interactive 모드 (대화형)
 
-Run the main application:
 ```bash
 python main.py
-```
-
-Or use the command interface:
-```bash
+# 또는
 python commands/forecast.py
 ```
 
-The agent will prompt you for:
-- Requests per second (RPS)
-- Average input tokens per request
-- Average output tokens per request
-- Model size (e.g., 7B, 70B, 405B)
-- Model precision (FP16, INT8, INT4)
-- Optional: Context window, batch size, GPU type
+단계별로 질문에 답변하며 용량 계획을 생성합니다:
+- 워크로드 타입 선택 (inference/training)
+- 모델 설정 (크기, 정밀도)
+- 워크로드 파라미터 입력
+- GPU 설정 (선택)
 
-#### Non-Interactive Mode
+### 2. JSON Config 모드
 
-Provide inputs directly via command line:
+```bash
+# 템플릿 생성
+python commands/forecast.py --generate-config inference
+python commands/forecast.py --generate-config training
+
+# 설정 파일로 실행
+python commands/forecast.py --config inference_config.json
+
+# CLI 옵션으로 오버라이드
+python commands/forecast.py --config inference_config.json --rps 20.0
+```
+
+#### Inference 설정 예시 (`inference_config.json`)
+
+```json
+{
+  "mode": "inference",
+  "workload": {
+    "requests_per_second": 10.0,
+    "avg_input_tokens": 500,
+    "avg_output_tokens": 200,
+    "peak_load_multiplier": 1.5
+  },
+  "model": {
+    "model_size_billions": 70,
+    "precision": "FP16",
+    "context_window": 8192,
+    "batch_size": 4
+  },
+  "gpu": {
+    "gpu_type": "A100-80GB",
+    "target_gpu_utilization": 0.7
+  },
+  "options": {
+    "include_cost": true
+  }
+}
+```
+
+#### Training 설정 예시 (`training_config.json`)
+
+```json
+{
+  "mode": "training",
+  "training": {
+    "dataset_size_tokens": 1000000000,
+    "sequence_length": 4096,
+    "num_epochs": 3,
+    "global_batch_size": 64,
+    "optimizer_type": "AdamW",
+    "gradient_checkpointing": true
+  },
+  "model": {
+    "model_size_billions": 70,
+    "precision": "BF16"
+  },
+  "gpu": {
+    "gpu_type": "H100-80GB"
+  }
+}
+```
+
+### 3. CLI Args 모드
+
+#### Inference 모드
+
 ```bash
 python commands/forecast.py \
-  --rps 10.0 \
+  --mode inference \
+  --rps 10 \
   --input-tokens 500 \
   --output-tokens 200 \
   --model-size 70 \
   --precision FP16 \
-  --context-window 8192 \
-  --batch-size 4 \
   --gpu-type A100-80GB \
   --cost \
-  --output my_plan.json
+  --output inference_plan.json
 ```
 
-## Project Structure
+#### Training 모드
+
+```bash
+python commands/forecast.py \
+  --mode training \
+  --dataset-size 1000000000 \
+  --sequence-length 4096 \
+  --epochs 3 \
+  --global-batch-size 64 \
+  --model-size 70 \
+  --precision BF16 \
+  --optimizer AdamW \
+  --gradient-checkpointing \
+  --cost \
+  --output training_plan.json
+```
+
+## 출력 예시
+
+### Inference Capacity Plan
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 LLM INFERENCE CAPACITY PLAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 INPUT SUMMARY:
+   Requests per Second: 10.0
+   Input Tokens: 500
+   Output Tokens: 200
+   Model Size: 70B
+   Precision: FP16
+
+🖥️ GPU RESOURCES:
+   GPU Memory per Replica: 175.94 GB
+   GPUs per Replica: 4
+   Recommended GPU: H100-80GB
+   Replicas: 59 - 89
+   Total GPUs: 236
+
+⚡ THROUGHPUT:
+   TPS per Replica: 33.94
+   Total TPS Capacity: 2002.17
+   Max RPS Capacity: 10.01
+
+⏱️ LATENCY:
+   Est. TTFT: 50.64 ms
+   Est. ITL: 63.95 ms
+
+💰 COST ESTIMATES:
+   Monthly GPU Cost: $509,760.00
+   Cost per 1M Tokens: $98.2268
+```
+
+### Training Capacity Plan
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 LLM TRAINING CAPACITY PLAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 INPUT SUMMARY:
+   Dataset Size: 1,000,000,000 tokens
+   Sequence Length: 4096
+   Epochs: 3
+   Global Batch Size: 64
+   Model Size: 70B
+   Optimizer: Adam
+
+🖥️ GPU MEMORY BREAKDOWN:
+   Model Weights: 130.39 GB
+   Gradients: 130.39 GB
+   Optimizer States: 260.77 GB
+   Activations: 36.51 GB
+   Total per GPU: 18.10 GB
+
+🔧 GPU REQUIREMENTS:
+   Required GPUs: 64
+   Recommended GPU: H100-80GB
+   Nodes: 8 × 8 GPUs
+
+⏱️ TRAINING ESTIMATES:
+   Duration: 11.0 hours (0.5 days)
+
+💰 COST ESTIMATES:
+   Total Training Cost: $2,121.21
+   Cost per Epoch: $707.07
+```
+
+## Programmatic Usage
+
+```python
+from llm_forecast_engine import LLMForecastEngine
+from models import LLMWorkloadInput, TrainingInput, ModelConfig, GPUConfig
+
+engine = LLMForecastEngine()
+
+# === Inference Mode ===
+workload = LLMWorkloadInput(
+    requests_per_second=10.0,
+    avg_input_tokens=500,
+    avg_output_tokens=200
+)
+model = ModelConfig(
+    model_size_billions=70,
+    precision="FP16"
+)
+
+inference_plan = engine.generate_inference_plan(workload, model, include_cost=True)
+print(f"Total GPUs: {inference_plan.gpu_resources.total_gpus}")
+print(f"Cost/M tokens: ${inference_plan.cost.cost_per_million_tokens:.4f}")
+
+# === Training Mode ===
+training = TrainingInput(
+    dataset_size_tokens=1_000_000_000,
+    sequence_length=4096,
+    num_epochs=3,
+    global_batch_size=64
+)
+
+training_plan = engine.generate_training_plan(training, model, include_cost=True)
+print(f"Required GPUs: {training_plan.gpu_resources.required_gpus}")
+print(f"Duration: {training_plan.training_metrics.estimated_duration_hours:.1f} hours")
+print(f"Cost: ${training_plan.cost.total_training_cost:,.2f}")
+
+# === GPU Comparison ===
+comparison = engine.compare_gpu_options(workload, model)
+for c in comparison:
+    print(f"{c['gpu_type']}: {c['total_gpus']} GPUs, ${c['monthly_gpu_cost']:,.0f}/month")
+
+# === Time-Series Forecasting ===
+from datetime import datetime, timedelta
+
+rps_history = [
+    (datetime.now() - timedelta(days=30-i), 10 + i * 0.1)
+    for i in range(30)
+]
+forecast = engine.forecast_future_needs(
+    rps_history, model, horizon_days=30, scenario="pessimistic"
+)
+print(f"Scaling recommendation: {forecast['scaling_recommendations'][0]}")
+```
+
+## 프로젝트 구조
 
 ```
 resource_forecast/
-├── spec-kit/                    # Specification documents
-│   ├── context.md              # Problem context, goals, assumptions
-│   ├── requirements.md         # Functional & non-functional requirements
-│   ├── architecture.md         # System design, components, data flow
-│   ├── work_plan.md            # Implementation phases and tasks
-│   └── acceptance_criteria.md  # Test scenarios and sign-off criteria
-│
 ├── commands/
-│   └── forecast.py             # Command-line entry point
-│
-├── models.py                    # Data models and structures
-├── config.py                    # Configuration parameters
-├── forecast_engine.py           # Core forecasting logic
-├── agent.py                     # Chatbot/agent interface
-├── main.py                      # Main entry point
-├── requirements.txt             # Python dependencies
-└── README.md                   # This file
+│   └── forecast.py          # CLI 엔트리포인트
+├── models.py                 # 데이터 모델 (Input/Output)
+├── config.py                 # GPU 스펙, 가격, 설정값
+├── config_loader.py          # JSON 설정 로더
+├── inference_engine.py       # 추론 용량 예측 엔진
+├── training_engine.py        # 학습 용량 예측 엔진
+├── forecasting.py            # 시계열 예측 엔진
+├── services.py               # 서비스 관리
+├── llm_forecast_engine.py    # 통합 엔진
+├── llm_agent.py              # 인터랙티브 에이전트
+├── main.py                   # 메인 엔트리포인트
+└── spec-kit/                 # 스펙 문서
+    ├── requirements.md
+    ├── architecture.md
+    ├── acceptance_criteria.md
+    └── work_plan.md
 ```
 
-## How It Works
+## 지원 GPU
 
-### Input Parameters
+| GPU | 메모리 | 가격/시간 (AWS) |
+|-----|--------|-----------------|
+| A100-40GB | 40 GB | $1.10 |
+| A100-80GB | 80 GB | $1.60 |
+| H100-80GB | 80 GB | $3.00 |
+| L4 | 24 GB | $0.50 |
+| T4 | 16 GB | $0.35 |
+| V100 | 32 GB | $0.90 |
 
-#### Required Inputs
-1. **Requests Per Second (RPS)** (required): Target throughput in requests per second
-2. **Average Input Tokens** (required): Average number of input tokens per request
-3. **Average Output Tokens** (required): Average number of output tokens per request
-4. **Model Size** (required): Model size in billions of parameters (e.g., 7, 70, 405)
-5. **Model Precision** (required): Quantization level (FP16, INT8, INT4)
+## 지원 정밀도
 
-#### Optional Inputs
-- **Context Window**: Maximum context length (default: 4096)
-- **Batch Size**: Requests processed simultaneously per replica (default: 1)
-- **GPU Type**: Specific GPU model (A100-40GB, A100-80GB, H100, etc.)
-- **Target Latency**: P50/P99 latency requirements in milliseconds
-- **Peak Load Multiplier**: Factor for peak traffic (default: 1.5)
-- **Growth Rate**: Expected traffic growth percentage
+- FP32: 4 bytes/param
+- FP16: 2 bytes/param
+- BF16: 2 bytes/param
+- INT8: 1 byte/param
+- INT4: 0.5 bytes/param
 
-### Output: LLM Infrastructure Capacity Plan
+## 계산 공식
 
-The system generates a comprehensive plan including:
+### GPU 메모리 (Inference)
 
-- **GPU Resources**: GPU memory requirements, recommended GPU types, number of GPUs per replica
-- **Model Replicas**: Minimum and maximum replica counts for horizontal scaling
-- **Throughput Metrics**: Tokens per second (TPS) per replica, total TPS capacity, effective RPS
-- **Latency Estimation**: Time to first token (TTFT), inter-token latency (ITL), end-to-end latency
-- **Scaling Recommendations**: Auto-scaling thresholds based on RPS, GPU utilization, and latency
-- **Cost Estimates** (optional): Monthly GPU costs and cost per million tokens
-
-### Forecasting Methodology
-
-The system uses LLM-specific formulas to calculate requirements:
-
-#### GPU Memory Calculation
 ```
 GPU Memory = Model Weights + KV Cache + Activations + Overhead
 
 Model Weights = model_params × bytes_per_param
-  - FP16/BF16: 2 bytes per parameter
-  - INT8: 1 byte per parameter
-  - INT4: 0.5 bytes per parameter
-
 KV Cache = 2 × num_layers × hidden_dim × context_length × batch_size × bytes_per_param
+Activations ≈ 15% of model weights
+Overhead ≈ 10%
 ```
 
-#### Throughput Calculation
-```
-TPS per Replica = (GPU Memory Bandwidth × Efficiency) / (Model Size × Bytes per Param)
-Effective RPS = TPS / avg_output_tokens
-Required Replicas = ceil(target_RPS / RPS_per_replica) × safety_margin
-```
-
-#### Latency Estimation
-```
-TTFT = (Input Tokens × Prefill Time per Token) + Model Loading Overhead
-ITL = Model Size / (GPU Memory Bandwidth × Efficiency)
-E2E Latency = TTFT + (Output Tokens × ITL)
-```
-
-Default parameters can be adjusted in `config.py`.
-
-## Example Output
+### GPU 메모리 (Training)
 
 ```
-📋 LLM INFRASTRUCTURE CAPACITY PLAN
-============================================================
+GPU Memory = Model Weights + Gradients + Optimizer States + Activations + Overhead
 
-📊 INPUT SUMMARY:
-   Requests Per Second: 10.0
-   Average Input Tokens: 500
-   Average Output Tokens: 200
-   Model Size: 70B parameters
-   Precision: FP16
-   Context Window: 8192
-
-🎮 GPU RESOURCES:
-   GPU Memory per Replica: 140.0 GB
-   Recommended GPU Type: A100-80GB
-   GPUs per Replica: 2
-   Minimum Replicas: 2
-   Maximum Replicas: 8
-   Total GPUs: 4 - 16
-
-⚡ THROUGHPUT:
-   TPS per Replica: 1,200 tokens/sec
-   Total TPS Capacity: 2,400 - 9,600 tokens/sec
-   Effective RPS Capacity: 12 - 48 requests/sec
-   Estimated TTFT: 150 ms
-   Estimated ITL: 25 ms
-   Meets Latency SLA: ✓
-
-📈 SCALING RECOMMENDATIONS:
-   Recommended Min Replicas: 2 (for high availability)
-   Recommended Max Replicas: 8 (for peak load)
-   Auto-scale RPS Threshold: 8.0 requests/sec
-   Auto-scale GPU Util Threshold: 70%
-   Auto-scale Latency Threshold: 500 ms
-
-💰 COST ESTIMATES:
-   Monthly GPU Cost: $8,000 - $32,000
-   Cost per Million Tokens: $0.50 - $2.00
-   Total Monthly Cost: $8,000 - $32,000 USD
+Gradients = Model Weights
+Optimizer States:
+  - Adam: 2 × Model Weights
+  - Adafactor: 0.5 × Model Weights
+  - SGD: 0
+Activations = sequence_length × batch_size × hidden_dim × num_layers × bytes
 ```
 
-## Configuration
+### 학습 시간
 
-Edit `config.py` to customize:
-- GPU memory bandwidth and efficiency factors
-- Safety margins and scaling factors
-- GPU type specifications and costs
-- Latency targets and thresholds
-- Auto-scaling parameters
-
-## Use Cases
-
-### LLM Inference (Serving)
-- Real-time chatbot applications
-- API endpoints serving LLM requests
-- Multi-tenant model serving platforms
-
-### LLM Agent Applications
-- Autonomous agents with multiple LLM calls per request
-- Chain-of-thought reasoning systems
-- Tool-using agents with variable compute intensity
-
-## Specification
-
-See `spec-kit/` directory for comprehensive documentation:
-
-| Document | Description |
-|----------|-------------|
-| `context.md` | Problem statement, goals, target users, LLM-specific assumptions |
-| `requirements.md` | Functional and non-functional requirements |
-| `architecture.md` | System design, component diagrams, calculation pipelines |
-| `work_plan.md` | Implementation phases, task breakdown, milestones |
-| `acceptance_criteria.md` | Test scenarios, edge cases, sign-off criteria |
-
-## Development
-
-### Adding New Features
-
-1. **Custom Forecasting Logic**: Modify `forecast_engine.py`
-2. **New Input Parameters**: Update `models.py` and `agent.py`
-3. **Different Output Formats**: Extend `agent.py` formatting methods
-4. **Fine-Tuning Support**: Add training-specific calculations (see architecture.md)
-
-### Testing
-
-Run the agent interactively to test:
-```bash
-python main.py
+```
+Training Duration = (Dataset Size × Epochs) / (Tokens per Second per GPU × Number of GPUs)
 ```
 
-## Future Enhancements
+## 라이선스
 
-- Fine-tuning capacity forecasting (training workloads)
-- Time-series forecasting with historical RPS/TPS data
-- Multi-cloud provider GPU recommendations
-- Real-time monitoring integration
-- Web-based interface
-- API endpoints
-- Cost optimization recommendations
-
-## License
-
-This project is provided as-is for LLM infrastructure capacity planning purposes.
-
-## Support
-
-For questions or issues, refer to the specification in `spec-kit/` or review the code documentation.
+MIT License

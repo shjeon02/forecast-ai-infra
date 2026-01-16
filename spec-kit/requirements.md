@@ -163,6 +163,24 @@
 | FR-4.2.2 | System SHALL support `--help` for usage information | P0 |
 | FR-4.2.3 | System SHALL support non-interactive execution | P0 |
 
+#### FR-4.3: JSON Configuration Mode
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-4.3.1 | System SHALL accept JSON configuration file via `--config` argument | P1 |
+| FR-4.3.2 | System SHALL validate JSON schema before processing | P1 |
+| FR-4.3.3 | System SHALL allow CLI arguments to override JSON config values | P1 |
+| FR-4.3.4 | System SHALL provide `--generate-config` to create template files | P2 |
+| FR-4.3.5 | System SHALL support both inference and training JSON schemas | P1 |
+| FR-4.3.6 | System SHALL display clear error messages for invalid JSON | P1 |
+
+#### FR-4.4: Input Mode Selection
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-4.4.1 | System SHALL default to interactive mode when no arguments provided | P0 |
+| FR-4.4.2 | System SHALL use JSON mode when `--config` is provided | P0 |
+| FR-4.4.3 | System SHALL use CLI mode when required arguments are provided | P0 |
+| FR-4.4.4 | System SHALL support mixed mode (JSON + CLI overrides) | P1 |
+
 ### FR-5: Export Capabilities
 
 | ID | Requirement | Priority |
@@ -411,10 +429,21 @@ TrainingCapacityPlan:
 ### CLI Interface
 
 ```bash
-# Interactive mode
+# Interactive mode (default when no arguments provided)
 python main.py
 
-# Inference mode (non-interactive)
+# JSON configuration mode
+python commands/forecast.py --config inference_config.json
+python commands/forecast.py --config training_config.json
+
+# JSON with CLI overrides (CLI args take precedence)
+python commands/forecast.py --config inference_config.json --rps 20.0 --cost
+
+# Generate template configuration files
+python commands/forecast.py --generate-config inference  # creates inference_config.json
+python commands/forecast.py --generate-config training   # creates training_config.json
+
+# Inference mode (non-interactive CLI args)
 python commands/forecast.py \
   --mode inference \
   --rps 10.0 \
@@ -428,7 +457,7 @@ python commands/forecast.py \
   [--cost] \
   [--output <filepath>]
 
-# Fine-tuning mode (non-interactive)
+# Fine-tuning mode (non-interactive CLI args)
 python commands/forecast.py \
   --mode training \
   --dataset-size 1000000000 \
@@ -442,6 +471,85 @@ python commands/forecast.py \
   [--gpu-type A100-80GB] \
   [--cost] \
   [--output <filepath>]
+```
+
+### JSON Configuration Schema
+
+#### Inference Configuration (`inference_config.json`)
+```json
+{
+  "mode": "inference",
+  "workload": {
+    "requests_per_second": 10.0,
+    "avg_input_tokens": 500,
+    "avg_output_tokens": 200,
+    "peak_load_multiplier": 1.5,
+    "growth_rate": 20.0
+  },
+  "model": {
+    "model_size_billions": 70,
+    "precision": "FP16",
+    "context_window": 8192,
+    "batch_size": 4,
+    "target_latency_p50_ms": 100,
+    "target_latency_p99_ms": 500
+  },
+  "gpu": {
+    "gpu_type": "A100-80GB",
+    "target_gpu_utilization": 0.7,
+    "current_replicas": 2
+  },
+  "service": {
+    "service_id": "chat-api",
+    "service_name": "Chat API Service",
+    "team_id": "team_platform",
+    "environment": "prod",
+    "criticality": "high",
+    "cloud_provider": "aws",
+    "region": "us-east-1"
+  },
+  "options": {
+    "include_cost": true,
+    "output_file": "capacity_plan.json"
+  }
+}
+```
+
+#### Training Configuration (`training_config.json`)
+```json
+{
+  "mode": "training",
+  "training": {
+    "dataset_size_tokens": 1000000000,
+    "sequence_length": 4096,
+    "num_epochs": 3,
+    "global_batch_size": 64,
+    "micro_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "optimizer_type": "AdamW",
+    "gradient_checkpointing": true,
+    "training_precision": "BF16"
+  },
+  "model": {
+    "model_size_billions": 70,
+    "precision": "BF16"
+  },
+  "gpu": {
+    "gpu_type": "H100-80GB",
+    "target_gpu_utilization": 0.85
+  },
+  "service": {
+    "service_id": "finetuning-job-001",
+    "team_id": "team_ml",
+    "environment": "prod",
+    "cloud_provider": "gcp",
+    "region": "us-central1"
+  },
+  "options": {
+    "include_cost": true,
+    "output_file": "training_plan.json"
+  }
+}
 ```
 
 ### Programmatic Interface

@@ -133,7 +133,172 @@
   - [ ] `--global-batch-size`
   - [ ] `--optimizer`
   - [ ] `--gradient-checkpointing`
+- [ ] JSON config arguments documented:
+  - [ ] `--config`
+  - [ ] `--generate-config`
 - [ ] Exit code 0
+
+---
+
+### TS-6b: JSON Config Mode - Inference
+
+**Preconditions**: System is installed and ready to run
+
+**Steps**:
+1. Create `inference_config.json` with valid inference configuration
+2. Run `python commands/forecast.py --config inference_config.json`
+
+**Expected Results**:
+- [ ] No interactive prompts appear
+- [ ] JSON file is parsed correctly
+- [ ] All values from JSON are applied
+- [ ] Capacity plan displays with all sections
+- [ ] Exit code 0
+
+**Sample Config**:
+```json
+{
+  "mode": "inference",
+  "workload": {
+    "requests_per_second": 10.0,
+    "avg_input_tokens": 500,
+    "avg_output_tokens": 200
+  },
+  "model": {
+    "model_size_billions": 70,
+    "precision": "FP16"
+  }
+}
+```
+
+---
+
+### TS-6c: JSON Config Mode - Training
+
+**Preconditions**: System is installed and ready to run
+
+**Steps**:
+1. Create `training_config.json` with valid training configuration
+2. Run `python commands/forecast.py --config training_config.json`
+
+**Expected Results**:
+- [ ] No interactive prompts appear
+- [ ] JSON file is parsed correctly
+- [ ] Training capacity plan displays with:
+  - [ ] GPU memory breakdown
+  - [ ] Training duration estimate
+  - [ ] GPU count recommendation
+- [ ] Exit code 0
+
+---
+
+### TS-6d: JSON Config Mode - CLI Override
+
+**Preconditions**: System is installed and ready to run
+
+**Steps**:
+1. Create config with `requests_per_second: 10.0`
+2. Run `python commands/forecast.py --config config.json --rps 20.0`
+
+**Expected Results**:
+- [ ] CLI argument `--rps 20.0` overrides JSON value
+- [ ] Capacity plan shows RPS = 20.0
+- [ ] Other JSON values remain intact
+
+---
+
+### TS-6e: JSON Config Mode - Invalid JSON
+
+**Preconditions**: System is installed and ready to run
+
+**Steps**:
+1. Create `invalid.json` with malformed JSON syntax
+2. Run `python commands/forecast.py --config invalid.json`
+
+**Expected Results**:
+- [ ] Clear error message: `❌ Invalid JSON format: <error details>`
+- [ ] System does not crash
+- [ ] Exit code non-zero
+
+---
+
+### TS-6f: JSON Config Mode - Missing Required Fields
+
+**Preconditions**: System is installed and ready to run
+
+**Steps**:
+1. Create config missing required fields (e.g., no `model_size_billions`)
+2. Run `python commands/forecast.py --config incomplete.json`
+
+**Expected Results**:
+- [ ] Clear error message listing missing required fields
+- [ ] Suggests which fields are required
+- [ ] Exit code non-zero
+
+---
+
+### TS-6g: JSON Config Mode - File Not Found
+
+**Preconditions**: System is installed and ready to run
+
+**Steps**:
+1. Run `python commands/forecast.py --config nonexistent.json`
+
+**Expected Results**:
+- [ ] Clear error message: `❌ Config file not found: nonexistent.json`
+- [ ] Exit code non-zero
+
+---
+
+### TS-6h: Generate Config Template - Inference
+
+**Preconditions**: System is installed and ready to run
+
+**Steps**:
+1. Run `python commands/forecast.py --generate-config inference`
+
+**Expected Results**:
+- [ ] Creates `inference_config.json` in current directory
+- [ ] File contains valid JSON with all inference fields
+- [ ] File contains helpful comments (as field descriptions)
+- [ ] Message confirms file creation
+
+---
+
+### TS-6i: Generate Config Template - Training
+
+**Preconditions**: System is installed and ready to run
+
+**Steps**:
+1. Run `python commands/forecast.py --generate-config training`
+
+**Expected Results**:
+- [ ] Creates `training_config.json` in current directory
+- [ ] File contains valid JSON with all training fields
+- [ ] File contains helpful comments (as field descriptions)
+- [ ] Message confirms file creation
+
+---
+
+### TS-6j: Input Mode Selection - Priority
+
+**Preconditions**: System is installed and ready to run
+
+**Test Cases**:
+
+| Input Combination | Expected Mode |
+|-------------------|---------------|
+| No arguments | Interactive |
+| `--config file.json` | JSON Config |
+| `--config file.json --rps 10` | JSON + Override |
+| `--mode inference --rps 10 --input-tokens 500 ...` | CLI Args |
+| `--config file.json --mode inference --rps 10 ...` | JSON + Override |
+
+**Expected Results**:
+- [ ] Each combination selects the correct mode
+- [ ] JSON mode takes precedence when `--config` is provided
+- [ ] CLI args override JSON values when both provided
+- [ ] Interactive mode only when no args provided
 
 ---
 
@@ -648,6 +813,50 @@ CapacityRequest(
 
 ---
 
+### EC-13: JSON Config with Empty Workload Object
+
+**Input**: JSON with empty `workload: {}`
+
+**Expected Results**:
+- [ ] Validation error listing required fields
+- [ ] Clear message about required workload parameters
+- [ ] Does not proceed with empty values
+
+---
+
+### EC-14: JSON Config with Invalid Enum Values
+
+**Input**: JSON with `"precision": "FLOAT16"` (not "FP16")
+
+**Expected Results**:
+- [ ] Validation error with clear message
+- [ ] Suggests valid values: FP32, FP16, BF16, INT8, INT4
+- [ ] Does not proceed with invalid enum
+
+---
+
+### EC-15: JSON Config with Nested Override
+
+**Input**: JSON config + CLI `--model-size 70`
+
+**Expected Results**:
+- [ ] Nested `model.model_size_billions` is overridden
+- [ ] Other model config values preserved
+- [ ] Capacity plan reflects overridden value
+
+---
+
+### EC-16: Interactive Mode Fallback from Invalid JSON
+
+**Input**: Run with `--config` pointing to invalid file
+
+**Expected Results**:
+- [ ] Shows error about invalid config
+- [ ] Optionally offers to switch to interactive mode
+- [ ] Graceful handling without crash
+
+---
+
 ## Performance Criteria
 
 ### PC-1: Calculation Speed
@@ -714,6 +923,16 @@ After any code change, verify:
 - [ ] Edge cases still handled correctly
 - [ ] growth_rate=0 handled correctly (not treated as None)
 
+### JSON Config Mode
+- [ ] `--config` loads and parses JSON correctly
+- [ ] Schema validation catches missing required fields
+- [ ] CLI arguments override JSON values correctly
+- [ ] Invalid JSON shows clear error message
+- [ ] File not found shows clear error message
+- [ ] `--generate-config inference` creates valid template
+- [ ] `--generate-config training` creates valid template
+- [ ] Mode selection priority works correctly
+
 ### Advanced Mode
 - [ ] Service metadata input validates correctly
 - [ ] Historical data input parses correctly
@@ -739,6 +958,16 @@ After any code change, verify:
 - [ ] No known blocking issues
 - [ ] Regression tests pass
 
+### Ready for Release (JSON Config Mode)
+
+- [ ] TS-6b to TS-6j test scenarios pass
+- [ ] EC-13 to EC-16 edge cases handled
+- [ ] JSON schema validation works correctly
+- [ ] CLI override merging works correctly
+- [ ] Template generation works correctly
+- [ ] Mode selection priority works correctly
+- [ ] Error messages are clear and helpful
+
 ### Ready for Release (Fine-Tuning Mode)
 
 - [ ] TS-5, TS-10, TS-11, TS-12b test scenarios pass (training)
@@ -750,7 +979,7 @@ After any code change, verify:
 ### Ready for Release (Advanced Mode)
 
 - [ ] All TS-13 to TS-20 test scenarios pass
-- [ ] All EC-7 to EC-12 edge cases handled
+- [ ] All EC-7 to EC-16 edge cases handled
 - [ ] Time-series forecasting accuracy validated
 - [ ] Service management workflow tested
 - [ ] Multi-cloud GPU support validated

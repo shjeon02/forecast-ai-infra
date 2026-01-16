@@ -99,9 +99,36 @@
 
 ---
 
+### Phase 4b: JSON Configuration Mode
+**Duration**: 1 day  
+**Status**: ✅ Complete
+
+| Task | Description | Deliverable | Dependencies |
+|------|-------------|-------------|--------------|
+| 4b.1 | Define JSON schema for inference config | `schemas/inference_schema.json` | 5.1 |
+| 4b.2 | Define JSON schema for training config | `schemas/training_schema.json` | 5.2 |
+| 4b.3 | Implement JSON config loader | `config_loader.py` | 4b.1, 4b.2 |
+| 4b.4 | Implement JSON schema validation | `config_loader.py` | 4b.3 |
+| 4b.5 | Implement CLI argument override merging | `config_loader.py` | 4b.3 |
+| 4b.6 | Implement input mode selection logic | `commands/forecast.py` | 4.1 |
+| 4b.7 | Implement `--generate-config` command | `commands/forecast.py` | 4b.1, 4b.2 |
+| 4b.8 | Create template config files | `templates/*.json` | 4b.1, 4b.2 |
+| 4b.9 | Add JSON config error handling | `config_loader.py` | 4b.3 |
+
+**Acceptance Criteria**:
+- [ ] JSON config files parsed correctly
+- [ ] Schema validation catches missing required fields
+- [ ] CLI arguments override JSON values correctly
+- [ ] Invalid JSON shows clear error message
+- [ ] File not found shows clear error message
+- [ ] `--generate-config` creates valid template files
+- [ ] Mode selection priority works correctly (no args → interactive, --config → JSON, CLI args → CLI)
+
+---
+
 ### Phase 5: LLM-Specific Data Models
 **Duration**: 1.5 days  
-**Status**: 🔲 Pending
+**Status**: ✅ Complete
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
@@ -124,7 +151,7 @@
 
 ### Phase 6: Inference Forecasting Engine
 **Duration**: 2 days  
-**Status**: 🔲 Pending
+**Status**: ✅ Complete
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
@@ -148,7 +175,7 @@
 
 ### Phase 7: Fine-Tuning Forecasting Engine
 **Duration**: 2 days  
-**Status**: 🔲 Pending
+**Status**: ✅ Complete
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
@@ -174,7 +201,7 @@
 
 ### Phase 8: Time-Series Forecasting Engine
 **Duration**: 2 days  
-**Status**: 🔲 Pending
+**Status**: ✅ Complete
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
@@ -198,7 +225,7 @@
 
 ### Phase 9: Service & Resource Management
 **Duration**: 1 day  
-**Status**: 🔲 Pending
+**Status**: ✅ Complete
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
@@ -216,7 +243,7 @@
 
 ### Phase 10: Testing & Validation
 **Duration**: 2 days  
-**Status**: 🔲 Pending
+**Status**: ✅ Complete
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
@@ -241,7 +268,7 @@
 
 ### Phase 11: Documentation
 **Duration**: 1 day  
-**Status**: 🔲 Pending
+**Status**: ✅ Complete
 
 | Task | Description | Deliverable | Dependencies |
 |------|-------------|-------------|--------------|
@@ -270,19 +297,24 @@ Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──▶ Phase 3 ──▶ Phase 4 
                                                            ▼
                                                     Phase 5 (LLM Models)
                                                            │
-                              ┌────────────────────────────┼────────────────────────────┐
-                              ▼                            ▼                            ▼
-                    Phase 6 (Inference)          Phase 7 (Fine-Tuning)         Phase 8 (Time-Series)
-                              │                            │                            │
-                              └────────────────────────────┼────────────────────────────┘
-                                                           ▼
-                                                    Phase 9 (Services)
-                                                           │
-                                                           ▼
-                                                    Phase 10 (Testing)
-                                                           │
-                                                           ▼
-                                                    Phase 11 (Docs)
+                                                           ├──────────────────────┐
+                                                           │                      │
+                                                           ▼                      ▼
+                                                 Phase 4b (JSON Config)    Phase 6 (Inference)
+                                                           │                      │
+                                                           │              ┌───────┴───────┐
+                                                           │              ▼               ▼
+                                                           │    Phase 7 (Fine-Tuning)  Phase 8 (Time-Series)
+                                                           │              │               │
+                                                           └──────────────┼───────────────┘
+                                                                          ▼
+                                                                   Phase 9 (Services)
+                                                                          │
+                                                                          ▼
+                                                                   Phase 10 (Testing)
+                                                                          │
+                                                                          ▼
+                                                                   Phase 11 (Docs)
 ```
 
 ---
@@ -334,13 +366,14 @@ Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──▶ Phase 3 ──▶ Phase 4 
 | M2 | Formula-based engine complete | Day 2 | ✅ |
 | M3 | Interactive mode working | Day 3 | ✅ |
 | M4 | CLI mode working | Day 3.5 | ✅ |
-| M5 | LLM-specific data models complete | Day 5 | 🔲 |
-| M6 | Inference forecasting engine complete | Day 7 | 🔲 |
-| M7 | Fine-tuning forecasting engine complete | Day 9 | 🔲 |
-| M8 | Time-series forecasting complete | Day 11 | 🔲 |
-| M9 | Service management complete | Day 12 | 🔲 |
-| M10 | Testing complete | Day 14 | 🔲 |
-| M11 | Documentation complete | Day 15 | 🔲 |
+| M5 | LLM-specific data models complete | Day 5 | ✅ |
+| M5b | JSON config mode complete | Day 6 | ✅ |
+| M6 | Inference forecasting engine complete | Day 8 | ✅ |
+| M7 | Fine-tuning forecasting engine complete | Day 10 | ✅ |
+| M8 | Time-series forecasting complete | Day 12 | ✅ |
+| M9 | Service management complete | Day 13 | ✅ |
+| M10 | Testing complete | Day 15 | ✅ |
+| M11 | Documentation complete | Day 16 | ✅ |
 
 ---
 
@@ -361,16 +394,18 @@ Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──▶ Phase 3 ──▶ Phase 4 
 |----|-------------|----------|--------|--------|
 | E1 | Inference capacity forecasting | P0 | Large | 🔲 Phase 6 |
 | E2 | Fine-tuning capacity forecasting | P0 | Large | 🔲 Phase 7 |
-| E3 | Time-series forecasting (STL, ARIMA, ETS) | P1 | Large | 🔲 Phase 8 |
-| E4 | Historical data import | P1 | Medium | 🔲 Phase 5 |
-| E5 | Multi-cloud GPU pricing | P1 | Medium | 🔲 Phase 9 |
-| E6 | Scenario-based what-if analysis | P1 | Medium | 🔲 Phase 8 |
-| E7 | Tensor parallelism support | P2 | Medium | Backlog |
-| E8 | Pipeline parallelism support | P2 | Medium | Backlog |
-| E9 | LoRA/QLoRA memory calculation | P2 | Medium | Backlog |
-| E10 | Web-based interface | P2 | Large | Backlog |
-| E11 | API endpoints (FastAPI) | P2 | Medium | Backlog |
-| E12 | PDF export | P3 | Small | Backlog |
-| E13 | Interactive visualization | P3 | Medium | Backlog |
-| E14 | Real-time monitoring integration | P3 | Large | Backlog |
-| E15 | Cost optimization recommendations | P2 | Medium | Backlog |
+| E3 | JSON configuration input mode | P1 | Medium | ✅ Phase 4b |
+| E4 | Time-series forecasting (STL, ARIMA, ETS) | P1 | Large | ✅ Phase 8 |
+| E5 | Historical data import | P1 | Medium | ✅ Phase 5 |
+| E6 | Multi-cloud GPU pricing | P1 | Medium | ✅ Phase 9 |
+| E7 | Scenario-based what-if analysis | P1 | Medium | ✅ Phase 8 |
+| E8 | Tensor parallelism support | P2 | Medium | Backlog |
+| E9 | Pipeline parallelism support | P2 | Medium | Backlog |
+| E10 | LoRA/QLoRA memory calculation | P2 | Medium | Backlog |
+| E11 | Web-based interface | P2 | Large | Backlog |
+| E12 | API endpoints (FastAPI) | P2 | Medium | Backlog |
+| E13 | PDF export | P3 | Small | Backlog |
+| E14 | Interactive visualization | P3 | Medium | Backlog |
+| E15 | Real-time monitoring integration | P3 | Large | Backlog |
+| E16 | Cost optimization recommendations | P2 | Medium | Backlog |
+| E17 | YAML configuration support | P3 | Small | Backlog |

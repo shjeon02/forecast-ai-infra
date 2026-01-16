@@ -89,9 +89,16 @@
 - **Purpose**: CLI entry point with argument parsing
 - **Responsibilities**:
   - Parse command-line arguments
-  - Support both interactive and non-interactive modes
+  - Support interactive, JSON config, and CLI argument modes
+  - Determine input mode based on provided arguments
+  - Handle JSON config loading and CLI override merging
   - Handle output file generation
-- **Dependencies**: `agent.py`, `models.py`, `forecast_engine.py`
+- **Dependencies**: `agent.py`, `models.py`, `forecast_engine.py`, `config_loader.py`
+- **Key Functions**:
+  - `determine_input_mode(args)`: Select interactive/json/cli mode
+  - `load_json_config(filepath)`: Parse and validate JSON config
+  - `merge_config_with_args(config, args)`: Override config with CLI args
+  - `generate_config_template(mode)`: Create template JSON files
 
 ### 2. Presentation Layer
 
@@ -154,6 +161,43 @@
 
 ## Data Flow
 
+### Input Mode Selection Flow
+
+```
+                         ┌─────────────────┐
+                         │   User Input    │
+                         └─────────────────┘
+                                  │
+                                  ▼
+                    ┌─────────────────────────┐
+                    │   Mode Selection Logic  │
+                    │   (determine_input_mode)│
+                    └─────────────────────────┘
+                                  │
+              ┌───────────────────┼───────────────────┐
+              │                   │                   │
+              ▼                   ▼                   ▼
+    ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+    │   Interactive    │ │   JSON Config    │ │   CLI Arguments  │
+    │      Mode        │ │      Mode        │ │      Mode        │
+    │                  │ │                  │ │                  │
+    │ (no args given)  │ │ (--config file)  │ │ (--rps etc.)     │
+    └──────────────────┘ └──────────────────┘ └──────────────────┘
+              │                   │                   │
+              └───────────────────┼───────────────────┘
+                                  ▼
+                    ┌─────────────────────────┐
+                    │   Validated Input       │
+                    │ (LLMWorkloadInput or    │
+                    │  TrainingInput)         │
+                    └─────────────────────────┘
+                                  │
+                                  ▼
+                    ┌─────────────────────────┐
+                    │   Forecasting Engine    │
+                    └─────────────────────────┘
+```
+
 ### Interactive Mode Flow
 
 ```
@@ -171,6 +215,38 @@
                          ▼
                   ┌────────────┐
                   │ JSON Export│
+                  └────────────┘
+```
+
+### JSON Config Mode Flow
+
+```
+┌────────────┐    ┌────────────┐    ┌────────────┐    ┌────────────┐
+│ JSON File  │───▶│ JSON Parser│───▶│  Schema    │───▶│ UserInput  │
+│ (.json)    │    │            │    │ Validation │    │            │
+└────────────┘    └────────────┘    └────────────┘    └────────────┘
+                                           │                 │
+                                           ▼                 │
+                                    ┌────────────┐           │
+┌─────────┐                         │ CLI Args   │───────────┘
+│CLI Args │────────────────────────▶│ Override   │  (merge & override)
+│(optional)│                        └────────────┘
+└─────────┘                                │
+                                           ▼
+                                    ┌────────────┐
+                                    │   Engine   │
+                                    └────────────┘
+                                           │
+   ┌───────────────────────────────────────┘
+   │
+   ▼
+┌────────────┐    ┌────────────┐    ┌────────────┐
+│CapacityPlan│───▶│ Formatting │───▶│   stdout   │
+└────────────┘    └────────────┘    └────────────┘
+                         │
+                         ▼
+                  ┌────────────┐
+                  │ JSON File  │
                   └────────────┘
 ```
 
