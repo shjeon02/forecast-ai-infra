@@ -176,7 +176,7 @@ Examples:
     model_group.add_argument(
         '--precision',
         type=str,
-        choices=['FP32', 'FP16', 'BF16', 'INT8', 'INT4'],
+        choices=['FP32', 'FP16', 'BF16', 'INT8', 'INT4', 'FP8'],
         help='Model precision/quantization'
     )
     model_group.add_argument(
@@ -199,7 +199,7 @@ Examples:
     gpu_group.add_argument(
         '--gpu-type',
         type=str,
-        choices=['A100-40GB', 'A100-80GB', 'H100-80GB', 'L4', 'T4', 'V100'],
+        choices=['A100-40GB', 'A100-80GB', 'H100-80GB', 'H100-SXM', 'L4', 'T4', 'V100'],
         help='GPU type (default: auto-select)'
     )
     gpu_group.add_argument(

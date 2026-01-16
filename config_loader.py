@@ -177,7 +177,7 @@ class ConfigLoader:
             "rps": ("workload", "requests_per_second"),
             "input_tokens": ("workload", "avg_input_tokens"),
             "output_tokens": ("workload", "avg_output_tokens"),
-            "peak_load_multiplier": ("workload", "peak_load_multiplier"),
+            "peak_multiplier": ("workload", "peak_load_multiplier"),
             "growth_rate": ("workload", "growth_rate"),
             
             # Model mappings
@@ -188,7 +188,7 @@ class ConfigLoader:
             
             # GPU mappings
             "gpu_type": ("gpu", "gpu_type"),
-            "target_gpu_utilization": ("gpu", "target_gpu_utilization"),
+            "gpu_utilization": ("gpu", "target_gpu_utilization"),
             
             # Training mappings
             "dataset_size": ("training", "dataset_size_tokens"),

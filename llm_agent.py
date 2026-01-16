@@ -23,8 +23,8 @@ from training_engine import TrainingEngine
 class LLMCapacityAgent:
     """Agent interface for LLM capacity forecasting."""
     
-    VALID_PRECISION = ["FP32", "FP16", "BF16", "INT8", "INT4"]
-    VALID_GPU_TYPES = ["A100-40GB", "A100-80GB", "H100-80GB", "L4", "T4", "V100"]
+    VALID_PRECISION = ["FP32", "FP16", "BF16", "INT8", "INT4", "FP8"]
+    VALID_GPU_TYPES = ["A100-40GB", "A100-80GB", "H100-80GB", "H100-SXM", "L4", "T4", "V100"]
     VALID_OPTIMIZERS = ["Adam", "AdamW", "Adafactor", "SGD"]
     
     def __init__(self):
